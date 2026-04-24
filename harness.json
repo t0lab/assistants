@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "registry": "bundled",
+  "techStack": [],
+  "bundles": [
+    "local-memory",
+    "conventional-commits",
+    "branch-strategy",
+    "pre-commit-hooks",
+    "docs-as-code",
+    "spec-driven",
+    "planning-first",
+    "quality-gates",
+    "systematic-debugging",
+    "code-review-gates",
+    "context-discipline",
+    "security-review"
+  ],
+  "ide": [
+    "claude-code",
+    "cursor",
+    "codex",
+    "antigravity"
+  ]
+}

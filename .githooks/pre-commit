@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# harness-kit canonical git-hook dispatcher. Runs every *.sh in <hook>.d/ in sorted order.
+# Any non-zero exit blocks the git operation. Do not edit — add checks via *.sh files in the .d/ directory.
+set -e
+HOOK_NAME="$(basename "$0")"
+HOOK_DIR="$(dirname "$0")/$HOOK_NAME.d"
+[ -d "$HOOK_DIR" ] || exit 0
+shopt -s nullglob
+for script in "$HOOK_DIR"/*.sh; do
+  [ -x "$script" ] || chmod +x "$script" 2>/dev/null || true
+  if ! bash "$script" "$@"; then
+    echo "" >&2
+    echo "✗ $HOOK_NAME check failed: $script" >&2
+    exit 1
+  fi
+done
+exit 0

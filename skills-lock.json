@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "skills": {
+    "android-clean-architecture": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "github",
+      "computedHash": "877b63dfe31ec4d864c0a09ead442029a236def32fd2a7fd374083a27b4fa5ba"
+    },
+    "branch-strategy": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/branch-strategy",
+      "sourceType": "local",
+      "computedHash": "354700fcd29faed5c4e4de7dbfc019a5b9238951576e5d39372f842d168d1171"
+    },
+    "code-review": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/code-review",
+      "sourceType": "local",
+      "computedHash": "bb67ae45bc68ca7af9f011cb3ac4d1282e7171157f78e30b868911adcaaed656"
+    },
+    "context-discipline": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/context-discipline",
+      "sourceType": "local",
+      "computedHash": "779535c23bdbc088aaa59789fcc90b2e8ffc66051363c93c80349688236a14a4"
+    },
+    "docs-as-code": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/docs-as-code",
+      "sourceType": "local",
+      "computedHash": "6807b419e230180ca97f78a01f6bfe0105d5f8f3cce644c657c0520a093e4891"
+    },
+    "git-conventional": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/git-conventional",
+      "sourceType": "local",
+      "computedHash": "da3e7e74b3b1ba27e0129c3b5a91fda31a20d948e408320cfa76fdea56cdd76a"
+    },
+    "memory": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/memory",
+      "sourceType": "local",
+      "computedHash": "f9c86f7bddd1882291108642bfb0e0cc54595784d48ab7b1c79c850a909b8a08"
+    },
+    "memory-merge": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/memory-merge",
+      "sourceType": "local",
+      "computedHash": "08d29d90d74421c25b583d92606b459aa9bba3ec736c7f8b445443a5360e9458"
+    },
+    "mobile-android-design": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "0dfa08663016e0faa2db0611420bd5c17ba2d635a057e17a6b71c2a0c3f2ed79"
+    },
+    "planning-first": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/planning-first",
+      "sourceType": "local",
+      "computedHash": "40d08225bf4753750ca76593a37939686718f2961ccbf612291beffc49213d95"
+    },
+    "quality-gates": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/quality-gates",
+      "sourceType": "local",
+      "computedHash": "ff8c6443c291e9ffe6eb6577552e4831e4009dbbd6bb93d53e3ab50d333d87eb"
+    },
+    "security-review": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/security-review",
+      "sourceType": "local",
+      "computedHash": "f97a3a7463ddb60885f30deb1cd5282ff93ed2c2e567caf1329267bf1cea5834"
+    },
+    "spec-driven": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/spec-driven",
+      "sourceType": "local",
+      "computedHash": "6e80a0d766c438fb8e3a17ed41dbe4394ab0e25c99b58752a7361ca72fa55153"
+    },
+    "systematic-debugging": {
+      "source": "/home/liamlee/.npm/_npx/0bd38d85e8e9279d/node_modules/@harness-kit/cli/skills/systematic-debugging",
+      "sourceType": "local",
+      "computedHash": "0ca38f5ae6f543bfeb989e18bd30b88c7d08a892602d4ae89bede6fe37201ecc"
+    }
+  }
+}

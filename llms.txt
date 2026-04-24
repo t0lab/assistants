@@ -1,0 +1,8 @@
+# TimezLab Assistants
+
+> Project này khởi tạo các trợ lý cho các mục đích khác nhau
+
+## Docs Index
+
+- CLAUDE.md — AI agent instructions and project context
+- AGENTS.md — project map and key file pointers
