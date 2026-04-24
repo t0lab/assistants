@@ -3,6 +3,10 @@
 *.env
 !*.env.example
 
+# OpenClaw runtime state (sessions, credentials, databases, media)
+openclaw-gateway/state/
+openclaw-gateway/workspace/
+
 # Node
 node_modules/
 npm-debug.log*
