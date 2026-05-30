@@ -1,0 +1,16 @@
+# Hermes Agent — config (KHÔNG secret). Symlink vào ~/.hermes/config.yaml qua install/link-home.sh.
+# API key KHÔNG ở đây — đặt OPENAI_API_KEY trong ~/.hermes/.env (xem ../.env.example).
+
+model:
+  provider: custom                                  # OpenAI-compatible endpoint (LiteLLM proxy)
+  default: openai/Qwen/Qwen3.6-35B-A3B              # tên model phía LiteLLM; đổi nếu proxy đổi
+  base_url: https://litellm-horseai.everlearners.io/v1   # LiteLLM thường cần /v1
+  # context_length: 131072   # bỏ comment nếu proxy KHÔNG expose /v1/models để Hermes tự đọc
+  # Lưu ý: env MODEL_NAME / LLM_MODEL KHÔNG được Hermes đọc — tên model phải ở đây.
+
+# MCP servers — bật ở phase sau (mcp-root, khi máy đã root). Giữ placeholder cho dễ tìm.
+# mcp_servers:
+#   root:
+#     command: python
+#     args: ["-m", "mcp_root"]        # xem mcp-root/ — chạy lệnh đặc quyền qua `su -c`
+#     # cwd / env tuỳ cấu hình lúc đó

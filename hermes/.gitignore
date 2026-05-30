@@ -1,0 +1,13 @@
+# Secrets — chỉ commit .env.example, không bao giờ commit file .env đã điền
+.env
+*.env
+!*.env.example
+
+# Hermes runtime state (sống ở ~/.hermes; chặn nếu lỡ copy vào repo)
+*.db
+home/memories/*
+!home/memories/.gitkeep
+
+# Clone upstream — bootstrap.sh cài vào ~/.hermes/hermes-agent, KHÔNG nằm trong repo này
+hermes-agent/
+venv/

@@ -16,27 +16,29 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
 
 ## Tasks
 
-- [ ] T1 — Scaffold thư mục `hermes/` + `.gitignore` + README
+- [x] T1 — Scaffold thư mục `hermes/` + `.gitignore` + README ✅ 2026-05-30
   - Done when: tồn tại `hermes/home/`, `hermes/install/`, `hermes/.env.example`, `hermes/README.md`; `.gitignore` loại trừ `.env`, `*.db`, `home/memories/*` (giữ `.gitkeep`); README mô tả flow restore (sparse clone → bootstrap → link → fill .env → hermes).
   - Files: `hermes/README.md`, `hermes/.gitignore`, `hermes/home/memories/.gitkeep`
 
-- [ ] T2 — `hermes/install/bootstrap.sh` cài Hermes trên Termux (idempotent)
-  - Done when: script chạy lại không lỗi; cài `pkg` deps (git python clang rust make pkg-config libffi openssl nodejs ripgrep ffmpeg), set `ANDROID_API_LEVEL`, tạo swapfile nếu RAM<8GB, chạy `install.sh` upstream (hoặc manual venv + `pip install -e '.[termux]' -c constraints-termux.txt`); kết thúc gợi ý chạy `hermes doctor`. `bash bootstrap.sh --help` in usage.
+- [x] T2 — `hermes/install/bootstrap.sh` cài Hermes trên Termux (idempotent) ✅ 2026-05-30
+  - Done when: script chạy lại không lỗi; cài `pkg` deps (git python clang rust make pkg-config libffi openssl nodejs ripgrep ffmpeg), set `ANDROID_API_LEVEL`, **cảnh báo nếu RAM<7GB (KHÔNG tạo swap — `swapon` cần root; HyperOS đã có zram)**, manual venv + `pip install -e '.[termux]' -c constraints-termux.txt` + symlink `hermes` vào `$PREFIX/bin`; kết thúc gợi ý `link-home.sh` + `hermes doctor`. `bash bootstrap.sh --help` in usage.
+  - Verify: `bash -n` + `--help` smoke-test pass offline; chạy thật cần Termux (pkg/clone/pip).
   - Files: `hermes/install/bootstrap.sh`
 
-- [ ] T3 — `hermes/home/config.yaml` cấu hình model LiteLLM (không secret)
+- [x] T3 — `hermes/home/config.yaml` cấu hình model LiteLLM (không secret) ✅ 2026-05-30
   - Done when: `model.provider: custom`, `model.default: openai/Qwen/Qwen3.6-35B-A3B`, `model.base_url` trỏ LiteLLM proxy; không có api_key trong file; có placeholder `mcp_servers` (comment) cho mcp-root phase sau.
   - Files: `hermes/home/config.yaml`
 
-- [ ] T4 — `hermes/.env.example` template secrets
+- [x] T4 — `hermes/.env.example` template secrets ✅ 2026-05-30
   - Done when: liệt kê `OPENAI_API_KEY=` (LiteLLM) + comment hướng dẫn; tùy chọn `TELEGRAM_BOT_TOKEN=` cho gateway mode; không chứa key thật; nêu rõ "copy sang ~/.hermes/.env".
   - Files: `hermes/.env.example`
 
-- [ ] T5 — `hermes/install/link-home.sh` symlink home assets vào `$HERMES_HOME`
-  - Done when: symlink `SOUL.md`, `config.yaml`, `skills/` từ `hermes/home/` → `~/.hermes/`; KHÔNG đụng `.env`/`state.db`/`memories/`; idempotent (xóa link cũ trước khi tạo); in trạng thái link sau khi chạy.
+- [x] T5 — `hermes/install/link-home.sh` symlink home assets vào `$HERMES_HOME` ✅ 2026-05-30
+  - Done when: symlink `SOUL.md`, `config.yaml`, `skills/` từ `hermes/home/` → `~/.hermes/`; KHÔNG đụng `.env`/`state.db`/`memories/`; idempotent (thay link cũ, từ chối ghi đè file thật); in trạng thái link sau khi chạy.
+  - Verify: test sandbox `HERMES_HOME` — link OK, re-run idempotent, guard từ chối file thật, `.env` không bị đụng.
   - Files: `hermes/install/link-home.sh`
 
-- [ ] T6 — `hermes/home/SOUL.md` seed nhân cách (tiếng Việt)
+- [x] T6 — `hermes/home/SOUL.md` seed nhân cách (tiếng Việt) ✅ 2026-05-30
   - Done when: file non-empty, chỉ chứa identity/style/avoid/defaults (KHÔNG path/port/rule project — những thứ đó thuộc AGENTS.md); ≤ ~40 dòng.
   - Files: `hermes/home/SOUL.md`
 
