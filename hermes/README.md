@@ -47,7 +47,11 @@ hermes                       # chạy TUI
 >
 > Sửa SOUL/skills/config: edit trong repo này (trên laptop) → `git push` → trên phone `git pull`. Symlink nên thay đổi có hiệu lực ngay, không cần chạy lại `link-home.sh`. **VS Code Remote-SSH KHÔNG chạy được trên Termux** (Android dùng bionic libc) → dùng luồng git pull, hoặc `micro`/`nano` qua `ssh phone`.
 
+## Persistence (sau reboot)
+
+`install/persistence/` giữ phone "cắm điện là chạy" trên HyperOS chưa-root: `boot.sh` (Termux:Boot → wake-lock + sshd) và `adb-tweaks.sh` (tắt phantom-killer qua adb). Xem [persistence/README.md](install/persistence/README.md).
+
 ## Còn lại (xem `../docs/exec-plans/active/hermes-pivot.md`)
 
 - **T7** — skill mẫu trong `home/skills/` (hiện mới có `.gitkeep`).
-- **T8** — `install/persistence/` (Termux:Boot + adb-tweaks) giữ Hermes sống sau reboot.
+- **T9** — archive `openclaw-gateway/` → `bak/`.

@@ -47,8 +47,9 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
   - Done when: 1 skill hợp lệ (frontmatter `name/description/version` + section When to Use/Procedure/Pitfalls), ví dụ `tro-ly/tra-loi-tieng-viet` hoặc `device/device-status`; sau `link-home.sh` thì `hermes skills list` hiển thị nó.
   - Files: `hermes/home/skills/<category>/<skill>/SKILL.md`
 
-- [ ] T8 — `hermes/install/persistence/` giữ Hermes sống trên HyperOS chưa-root
-  - Done when: có script Termux:Boot khởi động (`termux-wake-lock` + `hermes gateway start` hoặc CLI), `adb-tweaks.sh` (tắt phantom-process killer qua adb, không root), và README liệt kê thao tác tay HyperOS (autostart, battery no-restriction, khóa recents).
+- [x] T8 — `hermes/install/persistence/` giữ Hermes sống trên HyperOS chưa-root ✅ 2026-05-30
+  - Done when: có script Termux:Boot khởi động (`termux-wake-lock` + `sshd`, block `hermes gateway start` để-sẵn-comment), `adb-tweaks.sh` (tắt phantom-process killer qua adb, chạy trên PC, không root), và README liệt kê thao tác tay HyperOS + cách cài boot script + verify sau reboot.
+  - Verify: `sh -n`/`bash -n` pass; `adb-tweaks.sh` báo lỗi sạch khi không có thiết bị. Reboot-test thật (ssh phone không cần gõ sshd) cần người dùng làm trên máy.
   - Files: `hermes/install/persistence/boot.sh`, `hermes/install/persistence/adb-tweaks.sh`, `hermes/install/persistence/README.md`
 
 - [ ] T9 — Docs sweep: OpenClaw→Hermes, LineageOS→HyperOS unrooted; archive code cũ

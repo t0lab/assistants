@@ -69,7 +69,7 @@ passwd            # đặt mật khẩu login (gõ 2 lần, ký tự không hi�
 sshd              # khởi động sshd
 ```
 > Termux sshd nghe sẵn **cổng 8022** — đúng với `Port 8022` trong config. Không dùng được port 22 (cần root).
-> sshd **không tự chạy lại sau reboot** — sẽ cho vào Termux:Boot ở phần persistence (T8). Tạm thời mở lại bằng cách chạy `sshd` trong Termux.
+> sshd **không tự chạy lại sau reboot** — tạm thời mở lại bằng `sshd` trong Termux. Tự động lúc boot: cài [`persistence/boot.sh`](persistence/README.md) qua Termux:Boot.
 
 **3c. Trên laptop** — thêm vào `~/.ssh/config`:
 ```sshconfig
@@ -140,7 +140,7 @@ adb shell settings put global settings_enable_monitor_phantom_procs false
 Verify lệnh 2 đã ăn: `adb shell "/system/bin/device_config get activity_manager max_phantom_processes"` → mong `2147483647`.
 
 > ⚠️ **MIUI/HyperOS gotcha:** lệnh 3 (`settings put global …`) hay báo `WRITE_SECURE_SETTINGS Permission denial`. Phải bật thêm **Developer options → `USB debugging (Security settings)`** (🇻🇳 *Gỡ lỗi USB (Cài đặt bảo mật)* — đòi **đăng nhập Mi account + lắp SIM**) rồi chạy lại. Ngại Mi account thì bỏ qua lệnh 3 — lệnh 2 (`max_phantom_processes` = max) đã là biện pháp chính; theo dõi xem Termux có bị kill không, bị thì mới bật Security settings.
-> Giá trị có thể reset sau reboot → sẽ tự động hoá trong `persistence/adb-tweaks.sh` (T8). Không có cáp: dùng **Wireless debugging** (`adb pair <IP>:<port>` rồi `adb connect <IP>:<port>`).
+> Giá trị có thể reset sau reboot → chạy lại bằng [`persistence/adb-tweaks.sh`](persistence/adb-tweaks.sh) (bản tự-động-hoá 3 lệnh này). Không có cáp: dùng **Wireless debugging** (`adb pair <IP>:<port>` rồi `adb connect <IP>:<port>`).
 
 ---
 
