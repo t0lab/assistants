@@ -1,8 +1,8 @@
 # TimezAssistant
 
-Android assistant app với wake word detection và persistent voice conversation. OpenClaw là một module optional — app phục vụ người dùng, không phụ thuộc vào OpenClaw.
+Android assistant app với wake word detection và persistent voice conversation. Hermes (gateway) là module optional — app phục vụ người dùng, không phụ thuộc cứng vào Hermes.
 
-**Status:** Phase 5 — chưa implement. T5.1–T5.5 có thể làm song song với Phase 2.
+**Status:** Deferred (sau) — chưa implement. Triển khai sau khi Hermes ổn định (xem `../docs/exec-plans/active/hermes-pivot.md`).
 
 **Package:** `com.timezlab.assistant`
 **Min SDK:** 26 (Android 8.0)
@@ -14,7 +14,7 @@ Android assistant app với wake word detection và persistent voice conversatio
 |-----------------|----------------|
 | Wake word → lệnh → ngủ | Wake word → conversation mode |
 | User phải nói wake word lại | Tiếp tục nói trong cùng session |
-| Single-turn | Multi-turn, OpenClaw giữ context |
+| Single-turn | Multi-turn, Hermes giữ context |
 
 ## Kiến trúc
 
@@ -28,7 +28,7 @@ VoiceSessionService (foreground)
     ├── STTProvider (pluggable)
     │   ├── SherpaOnnxSTT  default, on-device ~31MB
     │   └── WhisperLiveSTT ws://homeserver:9090
-    ├── OpenClawModule  ws://localhost:4000 (optional)
+    ├── HermesModule  → Hermes trên phone (optional)
     └── TTSManager  Android TextToSpeech (sentence streaming)
 ```
 
@@ -55,8 +55,8 @@ IDLE → [wake word] → LISTENING → [silence 800ms] → PROCESSING
 
 ## Modules
 
-`modules/openclaw/` — OpenClaw Gateway connector (optional module):
-- WebSocket tới `ws://localhost:4000` (on-phone Gateway) hoặc Tailscale URL
+`modules/hermes/` — Hermes connector (optional module):
+- Kết nối tới Hermes trên phone (Termux) qua API server/gateway của Hermes
 - Gửi text, nhận streaming response
 - Bật/tắt trong Settings
 
@@ -78,6 +78,6 @@ cd android-assistant
 
 ## Xem thêm
 
-- Exec plan Phase 5: `../docs/exec-plans/active/timezassistant-platform.md`
+- Pivot/plan: `../docs/exec-plans/active/hermes-pivot.md` (Android app = sau)
 - STT server: `../stt-server/README.md`
-- Gateway: `../openclaw-gateway/termux/README.md`
+- Hermes setup: `../hermes/README.md`

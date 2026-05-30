@@ -6,9 +6,9 @@ Các voice assistant hiện tại (Google Assistant, Siri) hoạt động theo m
 
 ## Product direction
 
-**Phase hiện tại:** Build nền tảng (P0 done, P1–P5 in progress).
+**Phase hiện tại:** Hermes pivot — đưa **Hermes Agent** chạy ổn định trên Termux + config-as-code (P0 done; P1–P5 cũ re-scoped/on-hold).
 
-Mục tiêu: phone trở thành personal AI assistant always-on — gọi tên là nói chuyện, có context nhớ xuyên suốt, chạy self-hosted trên chính thiết bị người dùng.
+Mục tiêu: phone trở thành personal AI assistant always-on — chạy self-hosted trên chính thiết bị, model qua LiteLLM proxy remote, cấu hình version-control để tái cài dễ. Mục tiêu xa: điều khiển phone như người thật + voice conversation.
 
 ## What success looks like
 
@@ -23,25 +23,24 @@ Mục tiêu: phone trở thành personal AI assistant always-on — gọi tên l
 - Không cạnh tranh với Google Assistant về breadth of integrations
 - Không build voice assistant cho nhiều người dùng — đây là personal tool
 - Không release lên Play Store — side-load only
-- Không thay thế OpenClaw — đây là interface layer lên OpenClaw
-- Không local LLM trên phone — dùng cloud LLM API qua Gateway
+- Không local LLM trên phone — model chạy remote qua LiteLLM proxy (OpenAI-compatible)
+- (Đổi 2026-05-29) Trước dùng OpenClaw; nay dùng Hermes Agent — xem `docs/design-docs/hermes-agent-replaces-openclaw.md`
 
 ## Components
 
 | Component | Vai trò người dùng nhìn thấy |
 |-----------|------------------------------|
-| TimezAssistant app | App dùng hàng ngày — wake word, voice conversation |
-| OpenClaw Gateway (Termux) | "Não" — xử lý intent, gọi tools, nhớ context |
-| whisper-live (home server) | Tai — STT chính xác cao khi ở nhà |
-| Device safety scripts | Chạy ngầm — user không thấy trừ khi có cảnh báo |
+| Hermes Agent (Termux) | "Não" — xử lý intent, gọi tools, nhớ context, tự học skill |
+| LiteLLM proxy (remote) | Model LLM — phone không chạy LLM |
+| TimezAssistant app | (sau) App hàng ngày — wake word, voice conversation |
+| whisper-live (home server) | (sau) Tai — STT chính xác cao khi ở nhà |
+| Device safety scripts | (sau, cần root) Chạy ngầm — cảnh báo pin/nhiệt |
 
 ## Roadmap (phases)
 
 - **P0** ✅ Repo restructure (2026-04-24)
-- **P1** Device safety scripts + Magisk module
-- **P2** OpenClaw Gateway on Termux + boot persistence
-- **P3** Root MCP server (tools: battery, thermal, root shell)
-- **P4** whisper-live STT server (home, RTX 3060)
-- **P5** TimezAssistant Android app (wake word + voice session)
+- **Hermes pivot** (active, 2026-05-29) — Hermes Agent on Termux + config-as-code + persistence
+- **On-hold (cần root):** device safety + Magisk (P1 cũ), root MCP server (P3 cũ)
+- **Sau:** whisper-live STT (P4 cũ), TimezAssistant Android app + điều khiển phone như người thật (P5 cũ)
 
-Chi tiết từng task: `docs/exec-plans/active/timezassistant-platform.md`
+Chi tiết task hiện tại: `docs/exec-plans/active/hermes-pivot.md` (plan cũ: `timezassistant-platform.md`)

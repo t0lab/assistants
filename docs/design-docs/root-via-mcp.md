@@ -3,6 +3,8 @@
 **Status:** accepted
 **Date:** 2026-04-24
 
+> **Amended 2026-05-29:** Thiết bị thực tế **đang ở stock HyperOS, CHƯA root** (không phải "Magisk root" như doc này giả định). Pattern `su -c` qua MCP vẫn là thiết kế đúng KHI có root, nhưng hiện **bị blocked** tới khi unlock bootloader + cài Magisk. Nguyên lý "gateway KHÔNG chạy as root" càng đúng với Hermes Agent. Xem `hermes-agent-replaces-openclaw.md`.
+
 ## Context
 
 Phone có Magisk root. OpenClaw cần thực thi root-level commands (đọc `/sys/class/power_supply`, kill processes, đọc `/data/`). Cách đơn giản nhất là chạy Gateway process as root. Tuy nhiên Gateway xử lý external content từ nhiều nguồn (Telegram, web, documents).

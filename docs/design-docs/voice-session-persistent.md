@@ -3,6 +3,8 @@
 **Status:** accepted
 **Date:** 2026-04-24
 
+> **Amended 2026-05-29:** "OpenClaw" trong doc này nay đọc là "Hermes Agent" (pivot). Quyết định persistent multi-turn session vẫn giữ; Hermes cũng giữ context theo session. Đây là phase Android app (defer). Xem `hermes-agent-replaces-openclaw.md`.
+
 ## Context
 
 Wake word assistants truyền thống (Google Assistant, Siri) hoạt động theo mô hình single-turn: wake word → một lệnh → kết quả → ngủ. User phải nói wake word lại cho mỗi lượt. OpenClaw hỗ trợ multi-turn conversation với context được giữ trong Gateway session.

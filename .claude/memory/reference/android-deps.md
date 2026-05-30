@@ -14,7 +14,7 @@ implementation("ai.picovoice:porcupine-android:3.0.2")
 // STT on-device + VAD (Silero bundled)
 implementation("com.github.k2-fsa.sherpa-onnx:sherpa-onnx-android:1.10.+")
 
-// WebSocket (WhisperLive + OpenClaw Gateway)
+// WebSocket (WhisperLive + Hermes)
 implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
 // Coroutines + Lifecycle

@@ -2,38 +2,39 @@
 
 ## Project
 
-**Purpose:** Nền tảng trợ lý cá nhân tự host — OpenClaw Gateway chạy native trên Android phone (LineageOS + Magisk root), Android assistant app với wake word + persistent voice conversation, STT server on-premise.
+**Purpose:** Nền tảng trợ lý cá nhân tự host — **Hermes Agent** (Nous Research) chạy native trên Android phone qua Termux; model điều khiển qua endpoint OpenAI-compatible remote (LiteLLM proxy). Mục tiêu xa: điều khiển phone "như người thật" (UI app, SMS, call, camera, hồng ngoại) + Android voice app — **defer** tới khi Hermes ổn định và máy được root.
 
-**Target device:** Redmi Note 11S (Helio G96, LineageOS + Magisk root)
-**Home server:** Linux + RTX 3060 12GB VRAM
+**Target device:** Redmi Note 11S 4G (Helio G96, codename `fleur`, có IR blaster) — **stock HyperOS, CHƯA root, CHƯA unlock bootloader** (tính tới 2026-05-29). Khả năng phụ thuộc root bị blocked tới khi unlock.
+**Home server:** Linux + RTX 3060 12GB VRAM (whisper-live STT — KHÔNG host model agent)
 
 ## Stack
 
 | Dir | Stack | Giai đoạn |
 |-----|-------|-----------|
-| `openclaw-gateway/termux/` | Node.js (OpenClaw), Bash | P2 |
-| `device/` | Bash, Magisk module | P1 |
-| `mcp-root/` | Python, MCP, ppadb | P3 |
-| `stt-server/` | Docker, whisper-live, CUDA | P4 |
-| `android-assistant/` | Kotlin, Jetpack Compose, Gradle | P5 |
+| `hermes/` | Hermes Agent (Python), Bash — config-as-code + Termux install | **active** (hermes-pivot) |
+| `mcp-root/` | Python, MCP, `su -c` | on hold (cần root) |
+| `device/` | Bash, Magisk module | on hold (cần root) |
+| `stt-server/` | Docker, whisper-live, CUDA | sau (P4 cũ) |
+| `android-assistant/` | Kotlin, Jetpack Compose, Gradle | sau (P5 cũ) |
+| `openclaw-gateway/` | (cũ, OpenClaw — sẽ archive vào `bak/`) | deprecated |
 
 ## Architecture
 
 ```
-Phone (LineageOS + Magisk):
-├── Termux: OpenClaw Gateway (Node.js :4000) + mcp-root server
-├── TimezAssistant app:
-│   ├── WakeWordService (Porcupine, background)
-│   ├── VoiceSessionService (persistent conversation loop)
-│   │   ├── STT: SherpaOnnx Zipformer-vi (default, on-device)
-│   │   │    OR  WhisperLive ws://homeserver:9090 (settings)
-│   │   ├── OpenClaw module → ws://localhost:4000
-│   │   └── TTS: Android built-in TextToSpeech
-│   └── Magisk: boot autostart + device safety scripts
-└── Magisk module: battery-guard + thermal-monitor (root)
+Phone (Redmi Note 11S — stock HyperOS, chưa root):
+└── Termux:
+    └── Hermes Agent harness (Python, cài qua `.[termux]`)
+        ├── Model: remote OpenAI-compatible (LiteLLM proxy) ← KHÔNG chạy LLM trên phone
+        ├── Config: ~/.hermes/ ← symlink từ repo hermes/home/ (SOUL.md, config.yaml, skills/)
+        ├── Secrets: ~/.hermes/.env (OPENAI_API_KEY — KHÔNG commit)
+        └── MCP: mcp-root su -c (phase sau, khi đã root)
+    └── Persistence: Termux:Boot + termux-wake-lock + adb phantom-killer tweak (không root)
 
-Home Server (RTX 3060):
-└── stt-server/: whisper-live large-v3-turbo, CUDA, :9090
+Home Server (RTX 3060): whisper-live STT (phase sau)
+
+Defer (cần root / native app):
+└── Điều khiển UI app (AccessibilityService), screenshot, SMS/call nhận,
+    camera, hồng ngoại (ConsumerIrManager), đọc data app khác, device safety
 ```
 
 ## Conventions
@@ -45,12 +46,12 @@ Home Server (RTX 3060):
 
 ## Key Decisions
 
-- STT mặc định: SherpaOnnx Zipformer-vi (offline, on-device, ~31MB)
-- STT option: whisper-live home server — configurable trong app Settings
-- Voice session: persistent (không cần wake word lại sau mỗi lượt)
-- Exit session: silence >8s | nói "thoát"/"dừng lại" | nhấn nút End
-- Gateway KHÔNG chạy as root — MCP tools dùng `su -c` để exec root commands trên phone
-- Docker setup cũ ở `bak/openclaw-gateway-docker/` (không dùng nữa)
+- Agent brain: **Hermes Agent** (thay OpenClaw) — Termux native, MIT. Xem `docs/design-docs/hermes-agent-replaces-openclaw.md`
+- Model: remote OpenAI-compatible (LiteLLM proxy). Tên model ở `config.yaml`, key ở `.env` (KHÔNG ở `MODEL_NAME` — Hermes không đọc)
+- Config-as-code: SOUL.md / skills / config.yaml version-control trong `hermes/`, symlink vào `~/.hermes/`, secrets tách riêng. Xem `docs/design-docs/hermes-config-as-code.md`
+- Root: máy CHƯA root → "như người thật" (UI control, screenshot im lặng, SMS nhận, camera, hồng ngoại) **defer**. Khi có root: gateway KHÔNG chạy as root, dùng `su -c` qua MCP
+- STT/voice (SherpaOnnx default, whisper-live option, session persistent): defer tới phase Android app
+- Code cũ: `bak/openclaw-gateway-docker/` (Docker), `openclaw-gateway/` (OpenClaw Termux — sẽ vào `bak/`)
 
 ## Memory
 

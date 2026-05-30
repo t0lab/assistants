@@ -2,26 +2,29 @@
 name: platform-architecture
 type: project
 created: 2026-04-24
-last-updated: 2026-04-24
+last-updated: 2026-05-29
 ---
 
 # TimezAssistant Platform Architecture
 
-## Deployment topology
+> **Pivot 2026-05-29:** OpenClaw → Hermes Agent; thiết bị là stock HyperOS **chưa root** (không phải LineageOS+Magisk). Phần Android voice + root đều defer. Xem `docs/design-docs/hermes-agent-replaces-openclaw.md`.
 
-Phone (Redmi Note 11S, LineageOS + Magisk):
-- OpenClaw Gateway in Termux (Node.js :4000)
-- mcp-root Python MCP server (root tools via `su -c`)
-- TimezAssistant Android app (Kotlin)
-- Magisk modules: device-guard (battery/thermal), gateway-autostart (boot trigger)
+## Deployment topology (current)
 
-Home server (RTX 3060 12GB):
-- whisper-live Docker container (CUDA, large-v3-turbo, :9090)
-- Accessible via Tailscale when phone is off home network
+Phone (Redmi Note 11S, **stock HyperOS, chưa root**):
+- Hermes Agent harness in Termux (Python, `.[termux]`)
+- Model: remote OpenAI-compatible endpoint (LiteLLM proxy) — KHÔNG chạy LLM trên phone
+- Config-as-code: `~/.hermes/` symlink từ repo `hermes/home/` (SOUL.md, config.yaml, skills/); secrets ở `~/.hermes/.env` (không commit)
+- Persistence: Termux:Boot + termux-wake-lock + adb phantom-killer tweak (không root)
 
-## Voice session flow
+Deferred (cần root / native app):
+- mcp-root Python MCP (`su -c` root tools), device-guard Magisk module
+- TimezAssistant Android app (voice), điều khiển UI/SMS/camera/hồng ngoại
+- whisper-live STT trên home server (RTX 3060, Tailscale)
 
-Wake word (Porcupine) → VoiceSessionService foreground → AudioRecord 16kHz → SileroVAD chunks → STTProvider → text → OpenClawModule ws://localhost:4000 → streaming response → TTSManager sentence-by-sentence → back to LISTENING
+## Voice session flow (phase Android app, sau)
+
+Wake word (Porcupine) → VoiceSessionService → AudioRecord 16kHz → SileroVAD → STTProvider → text → Hermes (qua ws/MCP) → streaming response → TTSManager → back to LISTENING
 
 Exit: silence >8s | keyword "thoát"/"dừng lại" | nút End | pin <15%
 
@@ -34,12 +37,12 @@ Pluggable — user switches in Settings without rebuild:
 ## Directory map
 
 ```
-openclaw-gateway/termux/     Node.js OpenClaw + mcp.json for Termux paths
-openclaw-gateway/workspace/  Agent workspace (AGENTS, SOUL, MEMORY) — shared
-device/scripts/     battery-guard.sh, thermal-monitor.sh, wakelock-manager.sh
-device/magisk-module/ Magisk installer for device safety + boot trigger
-mcp-root/           Python MCP server with root tools
-stt-server/         whisper-live Docker + CUDA config
-android-assistant/  Kotlin app: com.timezlab.assistant
+hermes/home/        SOUL.md, config.yaml, skills/ — symlink vào ~/.hermes/
+hermes/install/     bootstrap.sh, link-home.sh, persistence/
+mcp-root/           Python MCP server root tools — on hold (cần root)
+device/             battery-guard.sh, thermal-monitor.sh, Magisk module — on hold (cần root)
+stt-server/         whisper-live Docker + CUDA — sau
+android-assistant/  Kotlin app: com.timezlab.assistant — sau
+openclaw-gateway/   Cũ (OpenClaw) — deprecated, sẽ vào bak/
 bak/openclaw-gateway-docker/ Old Docker deployment (archived, unused)
 ```

@@ -4,30 +4,30 @@
 
 ## What This Does
 
-Nền tảng trợ lý cá nhân: OpenClaw Gateway chạy trên phone (LineageOS+Root), Android assistant app với wake word + real-time voice conversation, STT server on-premise (RTX 3060).
+Nền tảng trợ lý cá nhân: **Hermes Agent** chạy trên phone qua Termux (Redmi Note 11S, stock HyperOS — chưa root), model remote qua LiteLLM proxy (OpenAI-compatible). Mục tiêu xa: điều khiển phone như người thật + Android voice app (defer tới khi Hermes ổn định + máy root).
 
 ## Stack
 
 - **Polyglot Repo**: Mỗi thư mục ở root là một project độc lập.
-- Gateway: Node.js (OpenClaw) + Python (MCP root server)
-- Android app: Kotlin (TimezAssistant)
-- STT server: Python/Docker (whisper-live + CUDA)
-- Device scripts: Bash (Magisk module)
+- Agent: Hermes Agent (Python) qua Termux + config-as-code trong `hermes/`
+- MCP root server: Python (`mcp-root/`) — on hold (cần root)
+- Android app: Kotlin (TimezAssistant) — sau
+- STT server: Python/Docker (whisper-live + CUDA) — sau
+- Device scripts: Bash (Magisk module) — on hold (cần root)
 
 ## Directory Map
 
 | Dir | Vai trò |
 |-----|---------|
-| `openclaw-gateway/` | OpenClaw Gateway deployment |
-| `openclaw-gateway/termux/` | Deploy trên phone (LineageOS + Termux) |
-| `openclaw-gateway/workspace/` | Agent workspace: AGENTS, SOUL, MEMORY |
-| `openclaw-gateway/state/` | Runtime state (OpenClaw managed) |
-| `openclaw-gateway/skills/` | OpenClaw skills |
-| `device/` | Device safety scripts + Magisk module |
-| `mcp-root/` | Root-capable MCP server (Python) |
-| `stt-server/` | whisper-live Docker setup (home server, RTX 3060) |
-| `android-assistant/` | TimezAssistant Android app (Kotlin) |
-| `bak/` | Code cũ không còn dùng (Docker gateway) |
+| `hermes/` | **Hermes Agent config-as-code + Termux install** (active) |
+| `hermes/home/` | Asset symlink vào `~/.hermes/`: SOUL.md, config.yaml, skills/ |
+| `hermes/install/` | bootstrap.sh, link-home.sh, persistence/ |
+| `mcp-root/` | Root-capable MCP server (Python) — on hold (cần root) |
+| `device/` | Device safety scripts + Magisk module — on hold (cần root) |
+| `stt-server/` | whisper-live Docker (home server, RTX 3060) — sau |
+| `android-assistant/` | TimezAssistant Android app (Kotlin) — sau |
+| `openclaw-gateway/` | Cũ (OpenClaw) — deprecated, sẽ vào `bak/` |
+| `bak/` | Code cũ không dùng (Docker gateway, OpenClaw) |
 | `docs/exec-plans/active/` | Exec plans đang thực thi |
 
 ## Docs
@@ -36,7 +36,9 @@ Nền tảng trợ lý cá nhân: OpenClaw Gateway chạy trên phone (LineageOS
 |-----------|-----|
 | Hiểu cấu trúc module, dependency | `ARCHITECTURE.md` |
 | Product direction, non-goals, roadmap | `docs/DESIGN.md` |
-| Tasks chi tiết từng phase | `docs/exec-plans/active/timezassistant-platform.md` |
+| Tasks đang thực thi (Hermes pivot) | `docs/exec-plans/active/hermes-pivot.md` |
+| Vì sao Hermes / config-as-code | `docs/design-docs/hermes-agent-replaces-openclaw.md`, `hermes-config-as-code.md` |
+| Plan cũ (OpenClaw, một phần superseded) | `docs/exec-plans/active/timezassistant-platform.md` |
 | Lý do một quyết định kỹ thuật | `docs/design-docs/<topic>.md` |
 | Known tech debt và workarounds | `docs/exec-plans/tech-debt-tracker.md` |
 | Quy tắc AI agent | `CLAUDE.md` |

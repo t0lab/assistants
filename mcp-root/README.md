@@ -1,12 +1,12 @@
 # MCP Root Server
 
-Python MCP server cung cấp root-level tools cho OpenClaw Gateway. Chạy trong Termux với `USE_ROOT=true`.
+Python MCP server cung cấp root-level tools cho **Hermes Agent** (qua MCP). Chạy trong Termux với `USE_ROOT=true`.
 
-**Status:** Phase 3 — chưa implement (cần Phase 2 Gateway xong trước).
+**Status:** On hold — cần root. Máy đang stock HyperOS **chưa root** (xem `docs/design-docs/hermes-agent-replaces-openclaw.md`). Chỉ implement sau khi unlock bootloader + Magisk.
 
 ## Tại sao cần server riêng
 
-OpenClaw Gateway chạy user-level (không root) vì lý do bảo mật — prompt injection vào gateway root = toàn bộ device bị compromise. Thay vào đó, MCP server này nhận lệnh từ gateway và thực thi qua `su -c` với phạm vi kiểm soát rõ ràng.
+Hermes (agent) chạy user-level (không root) vì lý do bảo mật — prompt injection vào agent root = toàn bộ device bị compromise. Thay vào đó, MCP server này nhận lệnh từ Hermes và thực thi qua `su -c` với phạm vi kiểm soát rõ ràng. Xem `docs/design-docs/root-via-mcp.md`.
 
 ## Files (planned)
 
@@ -31,25 +31,26 @@ get_thermal_zones() -> dict                 # tất cả /sys/class/thermal/ther
 get_memory_info() -> dict                   # /proc/meminfo
 ```
 
-## Config trong openclaw-gateway/termux/mcp.json
+## Config trong Hermes `config.yaml` (mcp_servers)
 
-```json
-"android-root": {
-  "command": "python3",
-  "args": ["/data/data/com.termux/files/home/mcp-root/server.py"],
-  "env": { "USE_ROOT": "true" }
-}
+```yaml
+mcp_servers:
+  android-root:
+    command: python3
+    args: ["/data/data/com.termux/files/home/mcp-root/server.py"]
+    env: { USE_ROOT: "true" }
 ```
 
 ## Test
 
 ```bash
-# Sau khi deploy, từ Termux:
-openclaw ask "pin điện thoại còn bao nhiêu phần trăm và máy đang nóng không"
+# Sau khi deploy (đã root), từ Termux:
+hermes -q "pin điện thoại còn bao nhiêu phần trăm và máy đang nóng không"
 # Kỳ vọng: trả lời chính xác dựa trên /sys/class/power_supply/battery/
 ```
 
 ## Xem thêm
 
-- Exec plan Phase 3: `../docs/exec-plans/active/timezassistant-platform.md`
-- Gateway config: `../openclaw-gateway/termux/README.md`
+- Pivot/plan: `../docs/exec-plans/active/hermes-pivot.md` (mcp-root = Out of scope, defer)
+- ADR root: `../docs/design-docs/root-via-mcp.md`
+- Hermes setup: `../hermes/README.md`

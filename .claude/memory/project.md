@@ -1,5 +1,5 @@
 # Project Hot Cache
 
-- [platform-architecture](./project/platform-architecture.md) — TimezAssistant: Gateway on Termux, Android app wake word+voice, STT pluggable, home server whisper-live
-- [phase-status](./project/phase-status.md) — P0 complete (2026-04-24); P1–P5 pending; exec plan at docs/exec-plans/active/timezassistant-platform.md
-- [tech-decisions](./project/tech-decisions.md) — Porcupine wake word, SherpaOnnx STT default, whisper-live large-v3-turbo option, Termux not Docker, MCP root via su -c
+- [platform-architecture](./project/platform-architecture.md) — Hermes Agent on Termux (model remote/LiteLLM), config-as-code; Android voice + root control deferred
+- [phase-status](./project/phase-status.md) — P0 done; Hermes pivot active (hermes-pivot.md); P1/P3 on-hold (cần root); P4/P5 sau
+- [tech-decisions](./project/tech-decisions.md) — Hermes Agent (thay OpenClaw), model remote OpenAI-compat, config-as-code symlink, Termux not Docker, máy chưa root

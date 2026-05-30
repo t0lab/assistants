@@ -6,5 +6,5 @@
 - [tech-decisions](./project/tech-decisions.md) — Key technical choices with rationale
 
 ## Reference
-- [android-deps](./reference/android-deps.md) — Android dependency coordinates (Gradle)
-- [openclaw-gateway](./reference/openclaw-gateway.md) — OpenClaw Gateway setup for Termux
+- [android-deps](./reference/android-deps.md) — Android dependency coordinates (Gradle, phase sau)
+- [hermes-gateway](./reference/hermes-gateway.md) — Hermes Agent Termux install + config layout + LiteLLM model config

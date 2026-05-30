@@ -1,8 +1,14 @@
 # Exec Plan: TimezAssistant Platform
 
-**Status:** active
+**Status:** active (partially superseded)
 **Created:** 2026-04-24
 **Owner:** liamlee
+
+> **Note 2026-05-29 — Hermes pivot:** Dự án đã chuyển từ OpenClaw sang **Hermes Agent** và phát hiện thiết bị đang ở **stock HyperOS chưa-root** (không phải LineageOS+root). Tác động:
+> - **P2 (OpenClaw Gateway on Termux)** được **thay** bởi `docs/exec-plans/active/hermes-pivot.md` (cài Hermes thay vì OpenClaw).
+> - **P1 (device safety)** và **P3 (MCP root)** **on hold** — phụ thuộc root, blocked tới khi unlock bootloader.
+> - **P4 (STT server)** và **P5 (Android voice app)** vẫn hợp lệ về mặt ý tưởng nhưng chưa thực thi; sẽ re-scope sau khi Hermes ổn định.
+> Xem `docs/design-docs/hermes-agent-replaces-openclaw.md`. Phần thân dưới đây giữ nguyên làm bản ghi lịch sử.
 
 ## Goal
 

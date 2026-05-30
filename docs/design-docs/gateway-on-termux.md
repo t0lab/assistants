@@ -3,6 +3,8 @@
 **Status:** accepted
 **Date:** 2026-04-24
 
+> **Amended 2026-05-29:** Quyết định "Termux-native, không Docker" vẫn giữ nguyên, nhưng phần mềm gateway đã đổi từ OpenClaw sang **Hermes Agent**. Xem `hermes-agent-replaces-openclaw.md`. Mọi chỗ trong doc này nói "OpenClaw Gateway" giờ đọc là "Hermes Agent harness".
+
 ## Context
 
 OpenClaw Gateway cần chạy 24/7 trên phone (Redmi Note 11S, LineageOS + Magisk). Setup trước đó dùng Docker trên Linux host, phone chỉ là companion node app. Mục tiêu mới: phone tự chủ hoàn toàn, không cần server ngoài.
