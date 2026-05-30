@@ -26,16 +26,22 @@ Skip trên Termux: voice (faster-whisper), browser/playwright, Docker, systemd (
 - `.env` — secrets (`OPENAI_API_KEY`…) — KHÔNG commit
 - `state.db` — SQLite sessions (FTS5) — không commit
 
-## Model config (LiteLLM proxy, OpenAI-compatible)
-`config.yaml`:
+## Model config (LiteLLM proxy, OpenAI-compatible) — dùng NAMED provider block
+⚠️ ĐỪNG dùng thẳng `model.provider: custom`. Với `custom`, Hermes suy tên biến key từ **host của base_url** (`litellm-horseai.everlearners.io` → `EVERLEARNERS_API_KEY`), KHÔNG đọc `OPENAI_API_KEY` → gửi sentinel `no-key-required` → **401** từ LiteLLM ("Virtual Key expected, expected to start with 'sk-'"). (Logic: `hermes_cli/runtime_provider.py:_host_derived_api_key`.)
+Fix = named block trong `config.yaml` với `key_env` trỏ rõ biến:
 ```
+providers:
+  litellm:
+    base_url: "https://litellm-horseai.everlearners.io/v1"
+    key_env: OPENAI_API_KEY                       # _get_named_custom_provider đọc os.getenv(key_env)
+    default_model: "openai/Qwen/Qwen3.6-35B-A3B"  # khớp id trong /v1/models
 model:
-  provider: custom
-  default: openai/Qwen/Qwen3.6-35B-A3B
-  base_url: https://litellm-horseai.everlearners.io/v1   # LiteLLM thường cần /v1
-  # context_length: 131072  # set nếu proxy không expose /v1/models
+  provider: litellm
+  default: "openai/Qwen/Qwen3.6-35B-A3B"
 ```
-`.env`: `OPENAI_API_KEY=...`  (lưu ý: `MODEL_NAME`/`LLM_MODEL` env KHÔNG được Hermes đọc)
+Named-block fields hợp lệ: `base_url|url|api`, `key_env`(=`api_key_env`), `api_key`(inline), `default_model`, `context_length`, `api_mode`, `extra_body`. `model.provider` = tên block.
+`.env`: `OPENAI_API_KEY=sk-...` (Virtual Key LiteLLM, phải bắt đầu `sk-`). `MODEL_NAME`/`LLM_MODEL` env KHÔNG được đọc.
+Lưu ý prefix: proxy phục vụ id có sẵn `openai/` (vd `openai/Qwen/Qwen3.6-35B-A3B`) → `default`/`default_model` để NGUYÊN id đó. `-m` của `hermes` = `--model` (KHÔNG phải message); chat dùng TUI (`hermes`) rồi gõ.
 
 ## Run
 `hermes` (CLI/TUI) | `hermes gateway setup && hermes gateway start` (always-on: Telegram/Signal…)
