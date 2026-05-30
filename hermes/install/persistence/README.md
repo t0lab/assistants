@@ -10,8 +10,10 @@ Máy chưa root → không có Magisk `service.sh`/systemd. Cách giữ tiến t
 
 ## File
 
-- **`boot.sh`** — chạy lúc khởi động (qua Termux:Boot): wake-lock + `sshd` (+ tùy chọn `hermes gateway`).
+- **`boot.sh`** — chạy lúc khởi động (qua Termux:Boot). Tự bật (idempotent, không dup): wake-lock, `sshd`, `hermes gateway` (Telegram), `hermes dashboard` (web UI), `cloudflared` (tunnel — token từ `.env`).
 - **`adb-tweaks.sh`** — chạy **trên PC** qua adb: tắt phantom-process killer (Android 12+/HyperOS hay giết tiến trình nền của Termux).
+
+> **Tiền đề cho boot.sh chạy đủ:** đã cài `hermes dashboard`'s extras (`pip install -e '.[web,pty]'`), `cloudflared` (`pkg install cloudflared`), và đã chạy `hermes dashboard` tay **1 lần** để build frontend (npm). `.env` cần `TELEGRAM_*` (Telegram) và `CLOUDFLARE_TUNNEL_TOKEN` (tunnel) — không có thì boot.sh tự bỏ qua phần đó. Chi tiết web UI: [`../WEB-ACCESS.md`](../WEB-ACCESS.md).
 
 ---
 
@@ -40,8 +42,13 @@ chmod +x ~/t0lab/assistants/hermes/install/persistence/boot.sh
 
 Bật trước khi reboot để kiểm:
 ```bash
-sh ~/.termux/boot/boot.sh      # chạy thử tay
-cat ~/.hermes/logs/boot.log    # phải thấy wake-lock + sshd started
+sh ~/.termux/boot/boot.sh      # boot mode: start cái CHƯA chạy (idempotent, không kill)
+cat ~/.hermes/logs/boot.log    # thấy: wake-lock, sshd, hermes gateway, hermes dashboard, cloudflared started
+```
+
+**Restart sau khi đổi config/code** (vd `git pull`, sửa `.env`): boot mode bỏ qua service đang chạy → muốn áp thay đổi phải restart:
+```bash
+sh ~/.termux/boot/boot.sh --restart   # kill gateway/dashboard/cloudflared rồi start lại (KHÔNG đụng sshd)
 ```
 
 ## 3. Tắt phantom-process killer (trên PC, qua adb)
@@ -56,10 +63,9 @@ Giá trị có thể reset sau reboot lớn/cập nhật HyperOS → chạy lạ
 
 ## Kiểm tra sau reboot
 
-1. **Reboot** phone, đợi ~1 phút (đừng mở Termux).
+1. **Reboot** phone, **mở khoá màn hình 1 lần** (FBE — xem SETUP-PHONE Bước 3d), đợi ~1 phút (đừng mở Termux).
 2. Từ laptop: `ssh phone` → vào được shell **mà không cần** mở Termux/gõ `sshd` tay → ✓ boot.sh chạy.
-3. Trên phone (hoặc qua ssh): `cat ~/.hermes/logs/boot.log` → có dòng `wake-lock acquired` + `sshd started` của lần boot mới nhất.
+3. `cat ~/.hermes/logs/boot.log` → thấy các dòng `started` của lần boot mới nhất (sshd, gateway, dashboard, cloudflared).
+4. Nhắn **Telegram bot** → trả lời ✓. Mở `https://chat.timezlab.org` → login Access → dashboard ✓.
 
-## Gateway always-on (sau này)
-
-`boot.sh` có sẵn block `hermes gateway start` (đang comment). Khi nào cấu hình transport (vd `TELEGRAM_BOT_TOKEN` trong `~/.hermes/.env` + `hermes gateway setup`), bỏ comment block đó → agent chạy nền 24/7, trả lời qua Telegram kể cả khi không mở TUI.
+> Lưu ý FBE: có khoá màn hình thì boot.sh (và mọi service) **chỉ chạy sau lần mở khoá đầu tiên** hậu-reboot. NetBird tự lên cũng vậy. Xem SETUP-PHONE Bước 3d.

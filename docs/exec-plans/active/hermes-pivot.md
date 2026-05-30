@@ -47,10 +47,10 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
   - Done when: 1 skill hợp lệ (frontmatter `name/description/version` + section When to Use/Procedure/Pitfalls), ví dụ `tro-ly/tra-loi-tieng-viet` hoặc `device/device-status`; sau `link-home.sh` thì `hermes skills list` hiển thị nó.
   - Files: `hermes/home/skills/<category>/<skill>/SKILL.md`
 
-- [x] T8 — `hermes/install/persistence/` giữ Hermes sống trên HyperOS chưa-root ✅ 2026-05-30
-  - Done when: có script Termux:Boot khởi động (`termux-wake-lock` + `sshd`, block `hermes gateway start` để-sẵn-comment), `adb-tweaks.sh` (tắt phantom-process killer qua adb, chạy trên PC, không root), và README liệt kê thao tác tay HyperOS + cách cài boot script + verify sau reboot.
-  - Verify: `sh -n`/`bash -n` pass; `adb-tweaks.sh` báo lỗi sạch khi không có thiết bị. Reboot-test thật (ssh phone không cần gõ sshd) cần người dùng làm trên máy.
-  - Files: `hermes/install/persistence/boot.sh`, `hermes/install/persistence/adb-tweaks.sh`, `hermes/install/persistence/README.md`
+- [x] T8 — `hermes/install/persistence/` giữ Hermes sống trên HyperOS chưa-root ✅ 2026-05-30 (mở rộng 2026-05-31)
+  - Done when: script Termux:Boot tự bật (idempotent) `termux-wake-lock` + `sshd` + `hermes gateway` (Telegram) + `hermes dashboard` (web UI) + `cloudflared` (token từ `.env`); `adb-tweaks.sh` (phantom-killer qua adb, chạy trên PC); README + manual HyperOS + verify sau reboot.
+  - Verify: `sh -n` pass; reboot-test (ssh phone không cần gõ sshd) ✅ on-device 2026-05-30. Gateway/dashboard/cloudflared auto-start cần verify reboot sau khi cài đủ deps.
+  - Files: `hermes/install/persistence/{boot.sh,adb-tweaks.sh,README.md}`
 
 - [x] T9 — Docs sweep: OpenClaw→Hermes, LineageOS→HyperOS unrooted; xoá code cũ ✅ 2026-05-30
   - Done when: `CLAUDE.md`, `ARCHITECTURE.md`, `docs/DESIGN.md`, `AGENTS.md`, `.claude/memory/project/*` phản ánh Hermes + HyperOS-unrooted; `openclaw-gateway/` **xoá hẳn** (quyết định của user: delete, KHÔNG archive vào `bak/`; `bak/` chưa từng tồn tại → mọi nhắc tới `bak/` cũng đã gỡ); `grep -ri "openclaw\|lineageos\|bak/"` chỉ còn hit lịch sử/cố ý (ADR đã annotate, plan cũ superseded).
@@ -63,6 +63,7 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
 - 2026-05-29: Model name ở `config.yaml`, không ở `.env` (Hermes không đọc `MODEL_NAME`).
 - 2026-05-29: Persistence không-root qua Termux:Boot + adb phantom-killer tweak (thay Magisk service.sh vì máy chưa root).
 - 2026-05-30: ✅ **Verified on-device** — Hermes 0.15.1 chạy trên Redmi Note 11S (Termux), model LiteLLM `openai/Qwen/Qwen3.6-35B-A3B` trả lời tiếng Việt, SOUL.md áp dụng đúng. Hai fix then chốt: (1) bootstrap **ủy quyền `scripts/install.sh`** (psutil-android shim — manual pip fail ở psutil trên Python 3.13); (2) config.yaml dùng **named provider block `litellm` + `key_env: OPENAI_API_KEY`** — provider `custom` suy tên biến key từ host base_url (→ `EVERLEARNERS_API_KEY`), KHÔNG đọc `OPENAI_API_KEY` → gửi `no-key-required` → 401.
+- 2026-05-31: ✅ **Telegram gateway + Web dashboard** (mở rộng ngoài plan gốc). Telegram qua `hermes gateway` (token+allowed-users ở `.env`). Web UI qua `hermes dashboard` → `cloudflared` (trên phone) → `chat.timezlab.org`, gác bằng **Cloudflare Access** (email OTP). Quyết định + bài học ở [WEB-ACCESS.md](../../../hermes/install/WEB-ACCESS.md): dashboard cần `--host 0.0.0.0 --insecure` (WS Origin-guard) → Access bắt buộc; cloudflared phải ở trên phone (WS client loopback); `security.allow_lazy_installs: false` (discord/brotlicffi lazy-install loop làm treo API/524). Tất cả vào `boot.sh` để auto-start.
 
 ## Blockers
 
