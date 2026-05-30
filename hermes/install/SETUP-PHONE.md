@@ -60,7 +60,7 @@ Làm SSH sớm để các bước sau **copy/dán lệnh từ laptop** cho tho�
 - Play Store: tìm "NetBird"; hoặc GitHub: https://github.com/netbirdio/android-client/releases
 - Đăng nhập đúng management server của bạn → bấm **Connect**.
 - Mở app xem IP NetBird cấp cho phone. Nếu **khác** `100.97.86.95` → sửa `HostName` trong `~/.ssh/config` (mục 3c) cho khớp — hoặc gán cố định IP cho peer này trong NetBird dashboard để khỏi đổi.
-- Để SSH chạy **sau reboot** mà không phải mở app tay: bật **Always-on VPN** + Autostart cho NetBird — xem [persistence/README.md](persistence/README.md) §1b.
+- Để SSH chạy **sau reboot** mà không phải mở app tay: cấu hình NetBird tự kết nối lúc boot — xem **3d** bên dưới.
 
 **3b. Bật SSH server trong Termux** (mở Termux, chạy):
 ```bash
@@ -81,6 +81,18 @@ Host phone
 Kết nối: `ssh phone` → nhập mật khẩu vừa đặt. (Sau nên đổi sang SSH key để khỏi nhập mật khẩu mỗi lần.)
 
 > **Không cần dòng `User`:** Termux chỉ có 1 user (app uid `u0_aXXX` do Android cấp, không đổi tên được) và sshd **bỏ qua username** khi xác thực → bỏ trống thì `ssh` dùng tên đăng nhập của laptop vẫn vào được. Muốn ép thì thêm `User <tên-bất-kỳ>` cũng chạy.
+
+**3d. NetBird tự kết nối lúc boot (để `ssh phone` chạy sau reboot)**
+
+`sshd` sẽ tự bật lúc khởi động (persistence, T8), nhưng IP `100.97.86.95` là của NetBird — VPN chưa lên thì laptop báo `No route to host`. **Autostart cho NetBird chỉ MỞ app, KHÔNG tự bấm Connect → không đủ.** Cách chạy được (đã verify 2026-05-30): **Always-on VPN** (Android tự dựng tunnel, không cần bấm Connect).
+
+1. Đặt **khoá màn hình** (PIN/pattern) — HyperOS bắt buộc mới bật được Always-on VPN.
+2. Settings → **Kết nối & chia sẻ → VPN** → ⚙ cạnh **NetBird** → bật **Always-on VPN**. (Tùy chọn *Block connections without VPN* — chỉ bật nếu chấp nhận mất mạng khi NetBird sập.)
+3. NetBird dashboard: gán **IP cố định** cho peer phone để `100.97.86.95` không đổi.
+
+> ⚠️ **Khoá màn hình ⇒ mã hoá FBE ⇒ mở khoá 1 lần sau reboot.** Vùng data người dùng (CE) bị khoá tới lần mở khoá đầu tiên → **Termux:Boot (`sshd`), NetBird, Hermes đều CHỈ chạy sau khi mở khoá màn hình lần đầu**; trước đó phone không truy cập từ xa. Tức sau mỗi reboot: **mở khoá 1 lần → NetBird + `sshd` tự lên hết**, không phải chạm gì thêm. Khoá màn hình **không** ảnh hưởng lúc chạy bình thường (màn khoá do hết giờ thì sshd/NetBird/Hermes vẫn chạy nền).
+>
+> 💡 **Khỏi tự khoá lại lúc vận hành:** nếu phone cắm sạc thường trực, bật Developer options → **Stay awake / Luôn bật khi đang sạc** → màn không tự ngủ → không tự khoá lại (sau lần mở khoá đầu post-reboot). Đổi lại màn sáng liên tục (hao/burn-in). Lưu ý: điều khiển UI app khác "như người thật" lúc khoá vẫn cần root/AccessibilityService — defer (app thường không vượt được màn khoá secure).
 
 ---
 
