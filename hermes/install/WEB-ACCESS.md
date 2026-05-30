@@ -69,3 +69,4 @@ Qua SSH thì Origin = localhost → WS pass hết, dashboard giữ nguyên auth,
 | API chậm/treo/duplicate, **524** | vòng lặp lazy-install `discord.py[voice]`/`brotlicffi` (C-ext fail trên Termux) chặn request | `security.allow_lazy_installs: false` trong config.yaml |
 | WS `/api/ws,/events,/pty` failed | WS Origin-guard chỉ nhận Origin=bound host | `--host 0.0.0.0` (guard nhận mọi Origin); cloudflared phải ở **trên phone** |
 | Access vẫn cho vào | sửa policy không áp / còn policy Everyone / session cache | xoá+add lại policy; xoá Everyone; test ẩn danh |
+| Sau reboot gateway/dashboard chết (sshd sống) | `nohup: failed to run command 'hermes'` — lúc Termux:Boot `hermes` không resolve qua PATH (venv chưa active) | boot.sh dùng đường dẫn tuyệt đối `venv/bin/hermes` (đã fix); gateway thêm `wait_for_net` vì lúc boot mạng chưa lên |
