@@ -17,6 +17,12 @@ model:
   provider: litellm                               # trỏ tới block ở trên
   default: "openai/Qwen/Qwen3.6-35B-A3B"          # đổi nếu proxy đổi model
 
+# Termux: TẮT lazy pip-install lúc chạy. Backend như discord.py[voice]/brotlicffi (C-ext)
+# build FAIL trên Android → Hermes thử cài lại mỗi lần liệt kê tool → block + chậm API
+# (cả gateway lẫn dashboard). Cần backend nào thì cài tay trong venv.
+security:
+  allow_lazy_installs: false
+
 # MCP servers — bật ở phase sau (mcp-root, khi máy đã root). Giữ placeholder cho dễ tìm.
 # mcp_servers:
 #   root:
