@@ -26,8 +26,6 @@ Nền tảng trợ lý cá nhân: **Hermes Agent** chạy trên phone qua Termux
 | `device/` | Device safety scripts + Magisk module — on hold (cần root) |
 | `stt-server/` | whisper-live Docker (home server, RTX 3060) — sau |
 | `android-assistant/` | TimezAssistant Android app (Kotlin) — sau |
-| `openclaw-gateway/` | Cũ (OpenClaw) — deprecated, sẽ vào `bak/` |
-| `bak/` | Code cũ không dùng (Docker gateway, OpenClaw) |
 | `docs/exec-plans/active/` | Exec plans đang thực thi |
 
 ## Docs

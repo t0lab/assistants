@@ -8,6 +8,7 @@
 > - **P2 (OpenClaw Gateway on Termux)** được **thay** bởi `docs/exec-plans/active/hermes-pivot.md` (cài Hermes thay vì OpenClaw).
 > - **P1 (device safety)** và **P3 (MCP root)** **on hold** — phụ thuộc root, blocked tới khi unlock bootloader.
 > - **P4 (STT server)** và **P5 (Android voice app)** vẫn hợp lệ về mặt ý tưởng nhưng chưa thực thi; sẽ re-scope sau khi Hermes ổn định.
+> - **`openclaw-gateway/` + kế hoạch archive vào `bak/`** đã bỏ (2026-05-30): code OpenClaw **xoá hẳn**, KHÔNG tạo `bak/`. Mọi cấu trúc/task nhắc `openclaw/`·`openclaw-gateway/`·`bak/` dưới đây chỉ là bản ghi lịch sử.
 > Xem `docs/design-docs/hermes-agent-replaces-openclaw.md`. Phần thân dưới đây giữ nguyên làm bản ghi lịch sử.
 
 ## Goal

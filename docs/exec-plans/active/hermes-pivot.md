@@ -52,9 +52,9 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
   - Verify: `sh -n`/`bash -n` pass; `adb-tweaks.sh` báo lỗi sạch khi không có thiết bị. Reboot-test thật (ssh phone không cần gõ sshd) cần người dùng làm trên máy.
   - Files: `hermes/install/persistence/boot.sh`, `hermes/install/persistence/adb-tweaks.sh`, `hermes/install/persistence/README.md`
 
-- [ ] T9 — Docs sweep: OpenClaw→Hermes, LineageOS→HyperOS unrooted; archive code cũ
-  - Done when: `CLAUDE.md`, `ARCHITECTURE.md`, `docs/DESIGN.md`, `AGENTS.md`, `.claude/memory/project/*` phản ánh Hermes + HyperOS-unrooted; `openclaw-gateway/` chuyển vào `bak/`; `grep -ri "openclaw\|lineageos"` chỉ còn hit lịch sử/cố ý (ADR, bak/, plan cũ đã annotate).
-  - Files: `CLAUDE.md`, `ARCHITECTURE.md`, `docs/DESIGN.md`, `AGENTS.md`, `.claude/memory/project/*.md`, `bak/openclaw-gateway/`
+- [x] T9 — Docs sweep: OpenClaw→Hermes, LineageOS→HyperOS unrooted; xoá code cũ ✅ 2026-05-30
+  - Done when: `CLAUDE.md`, `ARCHITECTURE.md`, `docs/DESIGN.md`, `AGENTS.md`, `.claude/memory/project/*` phản ánh Hermes + HyperOS-unrooted; `openclaw-gateway/` **xoá hẳn** (quyết định của user: delete, KHÔNG archive vào `bak/`; `bak/` chưa từng tồn tại → mọi nhắc tới `bak/` cũng đã gỡ); `grep -ri "openclaw\|lineageos\|bak/"` chỉ còn hit lịch sử/cố ý (ADR đã annotate, plan cũ superseded).
+  - Files: `CLAUDE.md`, `ARCHITECTURE.md`, `AGENTS.md`, `.gitignore`, `.claude/memory/project/*.md`, 2 ADR, `timezassistant-platform.md` (annotate superseded)
 
 ## Decisions log
 

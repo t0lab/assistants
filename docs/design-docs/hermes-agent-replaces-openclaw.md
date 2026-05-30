@@ -42,7 +42,7 @@ Thay OpenClaw bằng **Hermes Agent** cài native trong Termux qua đường `.[
 - Phone chỉ chạy harness Hermes; LLM **luôn** là endpoint OpenAI-compatible remote. **Không** inference LLM trên phone.
 - Tên model đặt ở `config.yaml` (`model.default`), **KHÔNG** ở `.env` — `MODEL_NAME`/`LLM_MODEL` không được Hermes đọc.
 - Secrets (`OPENAI_API_KEY`, bot token) chỉ nằm trong `~/.hermes/.env`, **không bao giờ** commit (xem `hermes-config-as-code.md`).
-- `openclaw-gateway/` cũ được archive vào `bak/`, không sync.
+- `openclaw-gateway/` cũ đã **xoá hẳn** (2026-05-30; chưa từng có code gateway thật, chỉ runtime state cũ). Không archive — lịch sử nằm ở git nếu cần.
 - Mọi doc nói thiết bị "LineageOS + root" là **sai** tính tới 2026-05-29; thiết bị là stock HyperOS, unrooted. Khả năng phụ thuộc root phải đánh dấu "blocked tới khi unlock bootloader".
 - Gateway **KHÔNG** chạy as root (giữ nguyên lý do của `root-via-mcp.md` — càng đúng với agent xử lý nội dung untrusted).
 

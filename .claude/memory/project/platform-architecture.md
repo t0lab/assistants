@@ -43,6 +43,5 @@ mcp-root/           Python MCP server root tools — on hold (cần root)
 device/             battery-guard.sh, thermal-monitor.sh, Magisk module — on hold (cần root)
 stt-server/         whisper-live Docker + CUDA — sau
 android-assistant/  Kotlin app: com.timezlab.assistant — sau
-openclaw-gateway/   Cũ (OpenClaw) — deprecated, sẽ vào bak/
-bak/openclaw-gateway-docker/ Old Docker deployment (archived, unused)
+# (code OpenClaw cũ — Termux gateway + Docker — đã xoá hẳn 2026-05-30, không archive)
 ```

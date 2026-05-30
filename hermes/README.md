@@ -54,4 +54,3 @@ hermes                       # chạy TUI
 ## Còn lại (xem `../docs/exec-plans/active/hermes-pivot.md`)
 
 - **T7** — skill mẫu trong `home/skills/` (hiện mới có `.gitkeep`).
-- **T9** — archive `openclaw-gateway/` → `bak/`.

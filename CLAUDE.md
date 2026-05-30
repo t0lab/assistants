@@ -16,7 +16,6 @@
 | `device/` | Bash, Magisk module | on hold (cần root) |
 | `stt-server/` | Docker, whisper-live, CUDA | sau (P4 cũ) |
 | `android-assistant/` | Kotlin, Jetpack Compose, Gradle | sau (P5 cũ) |
-| `openclaw-gateway/` | (cũ, OpenClaw — sẽ archive vào `bak/`) | deprecated |
 
 ## Architecture
 
@@ -51,7 +50,7 @@ Defer (cần root / native app):
 - Config-as-code: SOUL.md / skills / config.yaml version-control trong `hermes/`, symlink vào `~/.hermes/`, secrets tách riêng. Xem `docs/design-docs/hermes-config-as-code.md`
 - Root: máy CHƯA root → "như người thật" (UI control, screenshot im lặng, SMS nhận, camera, hồng ngoại) **defer**. Khi có root: gateway KHÔNG chạy as root, dùng `su -c` qua MCP
 - STT/voice (SherpaOnnx default, whisper-live option, session persistent): defer tới phase Android app
-- Code cũ: `bak/openclaw-gateway-docker/` (Docker), `openclaw-gateway/` (OpenClaw Termux — sẽ vào `bak/`)
+- Code OpenClaw cũ (Termux gateway + Docker) đã **xoá hẳn** — không archive (lịch sử ở git nếu cần)
 
 ## Memory
 

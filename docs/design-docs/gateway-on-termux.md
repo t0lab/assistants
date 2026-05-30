@@ -35,7 +35,7 @@ Gateway chạy native trong Termux (Node.js LTS qua `pkg`), không Docker. Magis
 - `start.sh` phải acquire wakelock trước khi start Gateway
 - Magisk module `service.sh` là entry point sau boot — không dùng Termux:Boot
 - MCP paths dùng `/data/data/com.termux/files/home/...`, không dùng `/app/...` (Docker paths)
-- `openclaw-gateway/docker/` trong `bak/` — không dùng nữa, không sync
+- Code OpenClaw cũ (Termux gateway + Docker) đã xoá hẳn (2026-05-30) — ADR này superseded bởi `hermes-agent-replaces-openclaw.md`
 
 ## Revisit if
 

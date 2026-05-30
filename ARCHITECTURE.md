@@ -10,8 +10,6 @@
 | `device/` | Bash | Device safety scripts + Magisk module — on hold (cần root) | (system: /sys, Termux notify) |
 | `stt-server/` | Docker / Python | whisper-live serving endpoint cho home server — sau | (external: collabora/whisperlive) |
 | `android-assistant/` | Kotlin | TimezAssistant Android app — sau | Hermes, STT server (WebSocket) |
-| `openclaw-gateway/` | — | Cũ (OpenClaw) — deprecated, sẽ vào `bak/` | (none) |
-| `bak/` | — | Archived code, không dùng | (none) |
 
 ## Dependency direction
 
