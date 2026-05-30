@@ -21,8 +21,9 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
   - Files: `hermes/README.md`, `hermes/.gitignore`, `hermes/home/memories/.gitkeep`
 
 - [x] T2 — `hermes/install/bootstrap.sh` cài Hermes trên Termux (idempotent) ✅ 2026-05-30
-  - Done when: script chạy lại không lỗi; cài `pkg` deps (git python clang rust make pkg-config libffi openssl nodejs ripgrep ffmpeg), set `ANDROID_API_LEVEL`, **cảnh báo nếu RAM<7GB (KHÔNG tạo swap — `swapon` cần root; HyperOS đã có zram)**, manual venv + `pip install -e '.[termux]' -c constraints-termux.txt` + symlink `hermes` vào `$PREFIX/bin`; kết thúc gợi ý `link-home.sh` + `hermes doctor`. `bash bootstrap.sh --help` in usage.
-  - Verify: `bash -n` + `--help` smoke-test pass offline; chạy thật cần Termux (pkg/clone/pip).
+  - Done when: chạy lại không lỗi; **ủy quyền upstream `scripts/install.sh`** (KHÔNG tự reinvent pip — install.sh có shim `psutil` cho Python-android, build toolchain, venv, fallback `[termux-all]→[termux]→core`, symlink `hermes`); chạy `link-home.sh` TRƯỚC để config-as-code thắng default; cảnh báo nếu RAM<7GB (KHÔNG tạo swap — `swapon` cần root; HyperOS đã có zram); forward args sau `--` cho install.sh. `bash bootstrap.sh --help` in usage.
+  - ⚠️ Bài học: bản đầu reinvent `pip install -e .[termux]` → **fail ở `psutil` build** ("platform android is not supported") vì Python 3.13 trên Termux báo `sys.platform == 'android'`. install.sh prebuild psutil qua `scripts/install_psutil_android.py` (psutil#2762). → luôn dùng install.sh, đừng tự gọi pip.
+  - Verify: `bash -n` + `--help` pass offline; chạy thật cần Termux.
   - Files: `hermes/install/bootstrap.sh`
 
 - [x] T3 — `hermes/home/config.yaml` cấu hình model LiteLLM (không secret) ✅ 2026-05-30

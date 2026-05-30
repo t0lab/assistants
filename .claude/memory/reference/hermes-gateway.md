@@ -13,18 +13,9 @@ Repo: github.com/NousResearch/hermes-agent (MIT, Python 3.11+, uv). Có Termux s
 One-liner: `curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash`
 (auto-detect Termux → thử `.[termux-all]` → `.[termux]` → core, dùng `constraints-termux.txt`)
 
-Manual:
-```
-pkg install -y git python clang rust make pkg-config libffi openssl nodejs ripgrep ffmpeg
-git clone --recurse-submodules https://github.com/NousResearch/hermes-agent.git && cd hermes-agent
-python -m venv venv && source venv/bin/activate
-export ANDROID_API_LEVEL="$(getprop ro.build.version.sdk)"
-pip install -U pip setuptools wheel
-pip install -e '.[termux]' -c constraints-termux.txt
-ln -sf "$PWD/venv/bin/hermes" "$PREFIX/bin/hermes"
-hermes version && hermes doctor
-```
-RAM ~8GB + HyperOS sẵn ~6GB zram swap → cài hầu như không OOM. `install.sh` dùng prebuilt wheels (`constraints-termux.txt`) thay vì compile. (Tự tạo swap cần root; không cần.)
+⚠️ **DÙNG install.sh, ĐỪNG tự gọi pip.** Manual `pip install -e '.[termux]' -c constraints-termux.txt` **FAIL ở `psutil`** ("platform android is not supported") vì Python 3.13 trên Termux báo `sys.platform == 'android'`; psutil setup.py chưa nhận platform đó (psutil#2762). install.sh xử lý bằng `scripts/install_psutil_android.py` (prebuild psutil từ sdist + patch marker) TRƯỚC khi pip install. Nó còn lo: build toolchain (`pkg install`), venv, fallback extras `[termux-all]→[termux]→core`, symlink `hermes` vào PATH, tạo `~/.hermes/{.env,config.yaml,SOUL.md}` default nếu vắng + sync skill bundled vào `~/.hermes/skills/`.
+
+Repo dùng `hermes/install/bootstrap.sh` (ủy quyền install.sh) + `link-home.sh` (gắn config-as-code TRƯỚC, để default không đè). RAM ~8GB + HyperOS sẵn ~6GB zram → hầu như không OOM (tự tạo swap cần root; không cần).
 Skip trên Termux: voice (faster-whisper), browser/playwright, Docker, systemd (dùng nohup).
 
 ## Config layout (`$HERMES_HOME`, mặc định `~/.hermes`, override qua env `HERMES_HOME`)

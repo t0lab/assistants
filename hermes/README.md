@@ -20,7 +20,7 @@ hermes/
 └── .env.example           # template secrets → copy sang ~/.hermes/.env (KHÔNG commit)
 ```
 
-`~/.hermes/` (`$HERMES_HOME`) là **runtime**: `bootstrap.sh` clone upstream vào `~/.hermes/hermes-agent`; `link-home.sh` gắn config từ repo vào đây; `.env`, `state.db`, `memories/` sinh ra lúc chạy và **không** version-control.
+`~/.hermes/` (`$HERMES_HOME`) là **runtime**: `bootstrap.sh` gắn config rồi ủy quyền upstream `scripts/install.sh` (clone vào `~/.hermes/hermes-agent`, lo phần Termux: shim `psutil` cho Python-android, build toolchain, venv, symlink `hermes`). `.env`, `state.db`, `memories/` sinh ra lúc chạy và **không** version-control.
 
 ## Khôi phục trên máy mới
 
@@ -32,20 +32,19 @@ hermes/
 git clone https://github.com/t0lab/assistants.git ~/t0lab/assistants
 cd ~/t0lab/assistants/hermes
 
-# 2. Cài Hermes (idempotent)
+# 2. Cài Hermes (idempotent). bootstrap tự: link-home → clone upstream → install.sh
 bash install/bootstrap.sh
 
-# 3. Gắn config-as-code vào ~/.hermes/
-bash install/link-home.sh
+# 3. Điền secrets (install.sh đã tạo ~/.hermes/.env từ template)
+nano ~/.hermes/.env          # thêm OPENAI_API_KEY (key LiteLLM)
 
-# 4. Điền secrets (key LiteLLM)
-cp .env.example ~/.hermes/.env && nano ~/.hermes/.env   # điền OPENAI_API_KEY
-
-# 5. Kiểm tra
+# 4. Kiểm tra + chạy
 hermes version && hermes doctor && hermes skills list
-hermes                                                  # chạy TUI
+hermes                       # chạy TUI
 ```
 
+> `bootstrap.sh` chạy `link-home.sh` **trước** khi cài để config-as-code của ta thắng (install.sh chỉ tạo default khi vắng → thấy symlink thì giữ nguyên). Có thể chạy lại `bash install/link-home.sh` bất cứ lúc nào.
+>
 > Sửa SOUL/skills/config: edit trong repo này (trên laptop) → `git push` → trên phone `git pull`. Symlink nên thay đổi có hiệu lực ngay, không cần chạy lại `link-home.sh`. **VS Code Remote-SSH KHÔNG chạy được trên Termux** (Android dùng bionic libc) → dùng luồng git pull, hoặc `micro`/`nano` qua `ssh phone`.
 
 ## Còn lại (xem `../docs/exec-plans/active/hermes-pivot.md`)
