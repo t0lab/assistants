@@ -60,6 +60,7 @@ Làm SSH sớm để các bước sau **copy/dán lệnh từ laptop** cho tho�
 - Play Store: tìm "NetBird"; hoặc GitHub: https://github.com/netbirdio/android-client/releases
 - Đăng nhập đúng management server của bạn → bấm **Connect**.
 - Mở app xem IP NetBird cấp cho phone. Nếu **khác** `100.97.86.95` → sửa `HostName` trong `~/.ssh/config` (mục 3c) cho khớp — hoặc gán cố định IP cho peer này trong NetBird dashboard để khỏi đổi.
+- Để SSH chạy **sau reboot** mà không phải mở app tay: bật **Always-on VPN** + Autostart cho NetBird — xem [persistence/README.md](persistence/README.md) §1b.
 
 **3b. Bật SSH server trong Termux** (mở Termux, chạy):
 ```bash

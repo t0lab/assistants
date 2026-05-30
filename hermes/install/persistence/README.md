@@ -23,6 +23,16 @@ Máy chưa root → không có Magisk `service.sh`/systemd. Cách giữ tiến t
 - Tắt "Tạm dừng hoạt động ứng dụng nếu không dùng"
 - Khóa (🔒) thẻ **Termux** trong Recent apps
 
+## 1b. NetBird tự kết nối lúc boot (để SSH-sau-reboot chạy)
+
+`boot.sh` bật `sshd` khi khởi động, NHƯNG IP `100.97.86.95` là của NetBird — VPN chưa lên thì laptop báo `No route to host` (phải mở app NetBird tay). Cho NetBird tự lên:
+
+1. **Autostart + battery** cho app NetBird: Settings → Apps → Permissions → **Autostart → NetBird ON**; Battery → **No restrictions**.
+2. **Always-on VPN**: Settings → **Kết nối & chia sẻ → VPN** → ⚙ cạnh **NetBird** → bật **Always-on VPN**. (Tùy chọn *Block connections without VPN* — chỉ bật nếu chấp nhận mất mạng khi NetBird sập.)
+3. NetBird dashboard: gán **IP cố định** cho peer phone để `100.97.86.95` không đổi.
+
+> Vài máy chỉ dựng VPN sau lần mở khóa màn hình đầu tiên hậu-boot. Lỗi ngay sau reboot → mở khóa 1 lần rồi thử lại.
+
 ## 2. Cài Termux:Boot script
 
 Cần app **Termux:Boot** đã cài + **mở 1 lần** sau khi cài (để nó đăng ký nhận boot), và Autostart đã bật (mục 1). Rồi trên phone:
