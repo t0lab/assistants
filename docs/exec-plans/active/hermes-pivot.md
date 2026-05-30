@@ -61,6 +61,7 @@ Shape rationale ở 2 ADR: `docs/design-docs/hermes-agent-replaces-openclaw.md` 
 - 2026-05-29: Config-as-code + symlink + sparse-checkout (monorepo `hermes/`). Xem `docs/design-docs/hermes-config-as-code.md`.
 - 2026-05-29: Model name ở `config.yaml`, không ở `.env` (Hermes không đọc `MODEL_NAME`).
 - 2026-05-29: Persistence không-root qua Termux:Boot + adb phantom-killer tweak (thay Magisk service.sh vì máy chưa root).
+- 2026-05-30: ✅ **Verified on-device** — Hermes 0.15.1 chạy trên Redmi Note 11S (Termux), model LiteLLM `openai/Qwen/Qwen3.6-35B-A3B` trả lời tiếng Việt, SOUL.md áp dụng đúng. Hai fix then chốt: (1) bootstrap **ủy quyền `scripts/install.sh`** (psutil-android shim — manual pip fail ở psutil trên Python 3.13); (2) config.yaml dùng **named provider block `litellm` + `key_env: OPENAI_API_KEY`** — provider `custom` suy tên biến key từ host base_url (→ `EVERLEARNERS_API_KEY`), KHÔNG đọc `OPENAI_API_KEY` → gửi `no-key-required` → 401.
 
 ## Blockers
 
