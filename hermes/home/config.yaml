@@ -23,9 +23,19 @@ model:
 security:
   allow_lazy_installs: false
 
-# MCP servers — bật ở phase sau (mcp-root, khi máy đã root). Giữ placeholder cho dễ tìm.
-# mcp_servers:
-#   root:
-#     command: python
-#     args: ["-m", "mcp_root"]        # xem mcp-root/ — chạy lệnh đặc quyền qua `su -c`
-#     # cwd / env tuỳ cấu hình lúc đó
+# MCP servers
+mcp_servers:
+  # Điều khiển thiết bị (no-root) qua Shizuku/rish — xem hermes/mcp/ + ADR device-control-via-adb.
+  # Đường dẫn tuyệt đối trên phone (repo ở ~/t0lab/assistants). Cần `pip install -r hermes/mcp/requirements.txt`
+  # trong venv Hermes, và Shizuku đã kích hoạt (rish chạy được). Đổi backend qua HERMES_DEVICE_BACKEND.
+  device:
+    command: python3
+    args: ["/data/data/com.termux/files/home/t0lab/assistants/hermes/mcp/server.py"]
+    env:
+      HERMES_DEVICE_BACKEND: "rish"   # rish (Shizuku) | adb (self-ADB fallback)
+      RISH_APPLICATION_ID: "com.termux"  # rish cần biết app gọi (Termux); .bashrc không áp cho process spawn
+
+  # root: (phase sau, khi máy đã root) — chạy lệnh đặc quyền qua `su -c`, xem mcp-root/
+  # root:
+  #   command: python
+  #   args: ["-m", "mcp_root"]
