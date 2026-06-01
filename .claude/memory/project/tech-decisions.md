@@ -2,7 +2,7 @@
 name: tech-decisions
 type: project
 created: 2026-04-24
-last-updated: 2026-05-29
+last-updated: 2026-06-01
 ---
 
 # Key Technical Decisions
@@ -43,6 +43,17 @@ Bundled trong SherpaOnnx AAR. Threshold 0.5. Detect end-of-turn (silence 800ms s
 ## Gateway: Termux native (NOT Docker)
 Phone self-contained. Hermes harness qua Termux pkg (Python), cài bằng `.[termux]`.
 HERMES_HOME mặc định `~/.hermes` (`/data/data/com.termux/files/home/.hermes`).
+Termux là cái giá của north-star "điều khiển phone" (Docker không chạy trên Android, và Docker trên home-server không chạm phone). Revisit-if của ADR chỉ kích hoạt khi RAM<4GB/thermal — máy ~8GB nên giữ Termux.
+
+## Telegram: 2 profile (Jarvis owner / Friday group) — KHÔNG phải 1 bot 2 lớp
+- **default** (`~/.hermes/`) — agent **Jarvis**, full tool + device MCP, **DM-only** (`TELEGRAM_ALLOWED_USERS` = owner).
+- **`friday`** (`~/.hermes/profiles/friday/`) — agent **Friday**, bot group least-privilege: `agent.disabled_toolsets` gỡ terminal/code_execution/file/memory/messaging/device…, KHÔNG khai `mcp_servers`; `group_allowed_chats` + `require_mention: true`.
+
+**Why:** Hermes KHÔNG gate tool theo user; approval đẩy về chính người trigger (tự duyệt được) → rule prompt (SOUL) KHÔNG phải security boundary. Tool nhạy cảm chỉ cô lập được ở **mức profile**. Token Telegram phải KHÁC nhau mỗi profile (Telegram 1 getUpdates/token; Hermes tự chặn trùng).
+**How to apply:** Thêm bot least-privilege khác → tạo profile mới dưới `hermes/profiles/<name>/`, KHÔNG nới quyền bot group. Allowlist toolset set on-device `hermes -p <name> tools` (không có allowlist native → **re-audit khi nâng cấp Hermes**). Cron có thể escalate qua `enabled_toolsets` per-job → verify `disabled_toolsets` là sàn cứng.
+Config-as-code: `hermes/profiles/<name>/` symlink qua `link-home.sh` (loop); `boot.sh` tự start `hermes -p <name> gateway` cho profile có `TELEGRAM_BOT_TOKEN`.
+Naming: theme Iron Man — **Jarvis** (owner) / **Friday** (group) / Edith (nếu cần); username `@timezlab_<agent>_bot`.
+ADR: `docs/design-docs/telegram-group-bot.md`; setup: `hermes/install/TELEGRAM-GROUP.md`; plan: `docs/exec-plans/active/telegram-group-bot.md`.
 
 ## Root access: MCP via su -c — DEFERRED (máy chưa root)
 Khi có root: Hermes user-level, MCP server (USE_ROOT=true) chạy `su -c`. Rationale: prompt injection risk nếu agent chạy as root. Hiện máy stock HyperOS chưa root → on hold.

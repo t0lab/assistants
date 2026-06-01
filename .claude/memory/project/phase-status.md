@@ -2,7 +2,7 @@
 name: phase-status
 type: project
 created: 2026-04-24
-last-updated: 2026-05-29
+last-updated: 2026-06-01
 ---
 
 # Phase Status
@@ -13,6 +13,7 @@ Exec plan hiện tại: `docs/exec-plans/active/hermes-pivot.md` (plan cũ OpenC
 |-------|---------|--------|-------|
 | P0 | Repo restructure | ✅ Done 2026-04-24 | skeletons created |
 | Hermes pivot | Hermes Agent on Termux + config-as-code + persistence | 🔄 Active (2026-05-29) | T1 scaffold → T9 docs sweep; model qua LiteLLM proxy |
+| Bot group (friday) | Telegram bot #2 "Friday" least-privilege qua profile riêng | 🔄 Active (2026-06-01) | G2–G6 done (config/scripts/docs); **G7 verify on-device + tạo 2 bot BotFather** + G8 sweep pending. Plan: `telegram-group-bot.md` |
 | P1 (cũ) | Device safety + Magisk module | ⛔ On hold | Cần root — máy đang stock HyperOS chưa root |
 | P3 (cũ) | Root MCP server (`su -c`) | ⛔ On hold | Cần root |
 | P4 (cũ) | STT server (whisper-live, home) | ⏳ Sau | Independent |

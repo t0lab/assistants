@@ -2,7 +2,7 @@
 name: platform-architecture
 type: project
 created: 2026-04-24
-last-updated: 2026-05-29
+last-updated: 2026-06-01
 ---
 
 # TimezAssistant Platform Architecture
@@ -15,7 +15,8 @@ Phone (Redmi Note 11S, **stock HyperOS, chưa root**):
 - Hermes Agent harness in Termux (Python, `.[termux]`)
 - Model: remote OpenAI-compatible endpoint (LiteLLM proxy) — KHÔNG chạy LLM trên phone
 - Config-as-code: `~/.hermes/` symlink từ repo `hermes/home/` (SOUL.md, config.yaml, skills/); secrets ở `~/.hermes/.env` (không commit)
-- Persistence: Termux:Boot + termux-wake-lock + adb phantom-killer tweak (không root)
+- Telegram: 2 profile — **default** (agent **Jarvis**, full tool + device MCP, DM-only) + **`friday`** (agent **Friday**, bot group least-privilege, symlink từ `hermes/profiles/friday/`). Xem `docs/design-docs/telegram-group-bot.md`
+- Persistence: Termux:Boot + termux-wake-lock + adb phantom-killer tweak (không root); `boot.sh` start gateway cho default + mỗi profile có token
 
 Deferred (cần root / native app):
 - mcp-root Python MCP (`su -c` root tools), device-guard Magisk module
@@ -37,8 +38,9 @@ Pluggable — user switches in Settings without rebuild:
 ## Directory map
 
 ```
-hermes/home/        SOUL.md, config.yaml, skills/ — symlink vào ~/.hermes/
-hermes/install/     bootstrap.sh, link-home.sh, persistence/
+hermes/home/        SOUL.md (Jarvis), config.yaml, skills/ — symlink vào ~/.hermes/ (default profile)
+hermes/profiles/    named profile → ~/.hermes/profiles/<name>/ (vd friday — bot group Friday, least-privilege)
+hermes/install/     bootstrap.sh, link-home.sh, persistence/, TELEGRAM-GROUP.md
 mcp-root/           Python MCP server root tools — on hold (cần root)
 device/             battery-guard.sh, thermal-monitor.sh, Magisk module — on hold (cần root)
 stt-server/         whisper-live Docker + CUDA — sau

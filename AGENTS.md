@@ -20,8 +20,9 @@ Nền tảng trợ lý cá nhân: **Hermes Agent** chạy trên phone qua Termux
 | Dir | Vai trò |
 |-----|---------|
 | `hermes/` | **Hermes Agent config-as-code + Termux install** (active) |
-| `hermes/home/` | Asset symlink vào `~/.hermes/`: SOUL.md, config.yaml, skills/ |
-| `hermes/install/` | bootstrap.sh, link-home.sh, persistence/ |
+| `hermes/home/` | Asset symlink vào `~/.hermes/` (default profile, agent Jarvis): SOUL.md, config.yaml, skills/ |
+| `hermes/profiles/` | Named profile → `~/.hermes/profiles/<name>/` (vd `friday` — bot group Friday, least-privilege) |
+| `hermes/install/` | bootstrap.sh, link-home.sh, persistence/, TELEGRAM-GROUP.md |
 | `mcp-root/` | Root-capable MCP server (Python) — on hold (cần root) |
 | `device/` | Device safety scripts + Magisk module — on hold (cần root) |
 | `stt-server/` | whisper-live Docker (home server, RTX 3060) — sau |
@@ -36,6 +37,7 @@ Nền tảng trợ lý cá nhân: **Hermes Agent** chạy trên phone qua Termux
 | Product direction, non-goals, roadmap | `docs/DESIGN.md` |
 | Tasks đang thực thi (Hermes pivot) | `docs/exec-plans/active/hermes-pivot.md` |
 | Vì sao Hermes / config-as-code | `docs/design-docs/hermes-agent-replaces-openclaw.md`, `hermes-config-as-code.md` |
+| Bot Telegram group (least-privilege, 2-profile Jarvis/Friday) | `docs/design-docs/telegram-group-bot.md`, setup `hermes/install/TELEGRAM-GROUP.md` |
 | Plan cũ (OpenClaw, một phần superseded) | `docs/exec-plans/active/timezassistant-platform.md` |
 | Lý do một quyết định kỹ thuật | `docs/design-docs/<topic>.md` |
 | Known tech debt và workarounds | `docs/exec-plans/tech-debt-tracker.md` |

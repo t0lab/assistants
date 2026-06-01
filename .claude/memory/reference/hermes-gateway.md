@@ -2,7 +2,7 @@
 name: hermes-gateway
 type: reference
 created: 2026-05-29
-last-updated: 2026-05-29
+last-updated: 2026-06-01
 ---
 
 # Hermes Agent — Termux Setup
@@ -46,6 +46,14 @@ Lưu ý prefix: proxy phục vụ id có sẵn `openai/` (vd `openai/Qwen/Qwen3.
 ## Run
 `hermes` (CLI/TUI) | `hermes gateway setup && hermes gateway start` (always-on: Telegram/Signal…)
 `hermes skills list` | `hermes model` | `hermes config set K V` | `hermes doctor`
+
+## Profiles & multi-gateway
+- **Profile = instance độc lập:** `hermes profile create <name>` → `~/.hermes/profiles/<name>/` (config.yaml/.env/SOUL/skills/state riêng). Default profile = `~/.hermes/` (KHÔNG dưới profiles/). Cờ `-p <name>` cho mọi lệnh.
+- **Chạy gateway từng profile:** `hermes -p <name> gateway` (foreground; Termux dùng nohup trong `boot.sh`, loop `~/.hermes/profiles/*/`). KHÔNG có `--all` native.
+- **Token Telegram phải KHÁC nhau mỗi profile** — Hermes từ chối gateway thứ 2 nếu trùng (Telegram 1 getUpdates/token → 409 Conflict).
+- **Toolset:** KHÔNG có allowlist mức profile, chỉ denylist `agent.disabled_toolsets` (áp SAU per-platform, không override được). Per-platform select qua `hermes -p <name> tools` (persist vào config.yaml) → re-audit khi nâng cấp.
+- **Telegram group keys** ở `gateway.platforms.telegram.extra` (`group_allowed_chats`, `group_allow_from`, `require_mention`, `mention_patterns`) — đặt sai cấp bị drop âm thầm. BotFather: Group Privacy OFF + remove/re-add bot vào group.
+- Dự án dùng: profile `friday` (bot group least-privilege, agent Friday). Setup: `hermes/install/TELEGRAM-GROUP.md`.
 
 ## Migrate từ OpenClaw
 `hermes claw migrate` (import SOUL/MEMORY/skills/model/MCP từ `~/.openclaw`). Flags: `--source <path>`, `--dry-run`, `--migrate-secrets`.

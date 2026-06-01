@@ -24,8 +24,9 @@ Phone (Redmi Note 11S — stock HyperOS, chưa root):
 └── Termux:
     └── Hermes Agent harness (Python, cài qua `.[termux]`)
         ├── Model: remote OpenAI-compatible (LiteLLM proxy) ← KHÔNG chạy LLM trên phone
-        ├── Config: ~/.hermes/ ← symlink từ repo hermes/home/ (SOUL.md, config.yaml, skills/)
-        ├── Secrets: ~/.hermes/.env (OPENAI_API_KEY — KHÔNG commit)
+        ├── Config: ~/.hermes/ (default profile) ← symlink hermes/home/ (SOUL.md=Jarvis, config.yaml, skills/)
+        ├── Telegram: bot Jarvis (default — full tool, DM-only) + bot Friday (profile `friday` — group, least-privilege ← hermes/profiles/friday/)
+        ├── Secrets: ~/.hermes/.env + ~/.hermes/profiles/friday/.env (token riêng mỗi bot — KHÔNG commit)
         └── MCP: mcp-root su -c (phase sau, khi đã root)
     └── Persistence: Termux:Boot + termux-wake-lock + adb phantom-killer tweak (không root)
 
@@ -47,7 +48,8 @@ Defer (cần root / native app):
 
 - Agent brain: **Hermes Agent** (thay OpenClaw) — Termux native, MIT. Xem `docs/design-docs/hermes-agent-replaces-openclaw.md`
 - Model: remote OpenAI-compatible (LiteLLM proxy). Tên model ở `config.yaml`, key ở `.env` (KHÔNG ở `MODEL_NAME` — Hermes không đọc)
-- Config-as-code: SOUL.md / skills / config.yaml version-control trong `hermes/`, symlink vào `~/.hermes/`, secrets tách riêng. Xem `docs/design-docs/hermes-config-as-code.md`
+- Config-as-code: SOUL.md / skills / config.yaml version-control trong `hermes/` (default `home/` + named `profiles/<name>/`), symlink vào `~/.hermes/`, secrets tách riêng. Xem `docs/design-docs/hermes-config-as-code.md`
+- Telegram 2-profile: **Jarvis** (default, full tool + device, DM-only `TELEGRAM_ALLOWED_USERS`) + **Friday** (profile `friday`, bot group least-privilege — `disabled_toolsets` gỡ terminal/file/device…, `group_allowed_chats`+`require_mention`). Vì Hermes KHÔNG gate tool theo user → cô lập ở mức profile; token khác nhau mỗi bot. Xem `docs/design-docs/telegram-group-bot.md`
 - Root: máy CHƯA root → "như người thật" (UI control, screenshot im lặng, SMS nhận, camera, hồng ngoại) **defer**. Khi có root: gateway KHÔNG chạy as root, dùng `su -c` qua MCP
 - STT/voice (SherpaOnnx default, whisper-live option, session persistent): defer tới phase Android app
 - Code OpenClaw cũ (Termux gateway + Docker) đã **xoá hẳn** — không archive (lịch sử ở git nếu cần)
