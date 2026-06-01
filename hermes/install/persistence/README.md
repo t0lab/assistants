@@ -10,10 +10,10 @@ Máy chưa root → không có Magisk `service.sh`/systemd. Cách giữ tiến t
 
 ## File
 
-- **`boot.sh`** — chạy lúc khởi động (qua Termux:Boot). Tự bật (idempotent, không dup): wake-lock, `sshd`, `hermes gateway` (Telegram), `hermes dashboard` (web UI), `cloudflared` (tunnel — token từ `.env`).
+- **`boot.sh`** — chạy lúc khởi động (qua Termux:Boot). Tự bật (idempotent, không dup): wake-lock, `sshd`, `hermes gateway` (Telegram, default profile), `hermes -p <name> gateway` cho mỗi named profile có `TELEGRAM_BOT_TOKEN` (vd `friday` — bot group, xem [`../TELEGRAM-GROUP.md`](../TELEGRAM-GROUP.md)), `hermes dashboard` (web UI), `cloudflared` (tunnel — token từ `.env`).
 - **`adb-tweaks.sh`** — chạy **trên PC** qua adb: tắt phantom-process killer (Android 12+/HyperOS hay giết tiến trình nền của Termux).
 
-> **Tiền đề cho boot.sh chạy đủ:** đã cài `hermes dashboard`'s extras (`pip install -e '.[web,pty]'`), `cloudflared` (`pkg install cloudflared`), và đã chạy `hermes dashboard` tay **1 lần** để build frontend (npm). `.env` cần `TELEGRAM_*` (Telegram) và `CLOUDFLARE_TUNNEL_TOKEN` (tunnel) — không có thì boot.sh tự bỏ qua phần đó. Chi tiết web UI: [`../WEB-ACCESS.md`](../WEB-ACCESS.md).
+> **Tiền đề cho boot.sh chạy đủ:** đã cài `hermes dashboard`'s extras (`pip install -e '.[web,pty]'`), `cloudflared` (`pkg install cloudflared`), và đã chạy `hermes dashboard` tay **1 lần** để build frontend (npm). `.env` cần `TELEGRAM_*` (Telegram) và `CLOUDFLARE_TUNNEL_TOKEN` (tunnel) — không có thì boot.sh tự bỏ qua phần đó. Named profile (vd `friday`) đọc `~/.hermes/profiles/<name>/.env` riêng — thiếu `TELEGRAM_BOT_TOKEN` thì boot bỏ qua gateway của profile đó. Chi tiết web UI: [`../WEB-ACCESS.md`](../WEB-ACCESS.md), bot group: [`../TELEGRAM-GROUP.md`](../TELEGRAM-GROUP.md).
 
 ---
 

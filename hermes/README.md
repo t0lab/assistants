@@ -8,15 +8,18 @@ Brain là [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Res
 
 ```
 hermes/
-├── home/                  # symlink-vào ~/.hermes/ (config-as-code, COMMIT)
+├── home/                  # symlink-vào ~/.hermes/ (default profile, config-as-code, COMMIT)
 │   ├── SOUL.md            #   identity/style/defaults của trợ lý
 │   ├── config.yaml        #   model (LiteLLM) + mcp_servers (placeholder) — KHÔNG secret
 │   ├── skills/            #   skills drop-in (hermes skills list)
 │   └── memories/          #   runtime của agent — .gitkeep, KHÔNG commit nội dung
+├── profiles/              # named profile → ~/.hermes/profiles/<name>/ (config-as-code, COMMIT)
+│   └── friday/            #   "Friday" — bot Telegram group, least-privilege — xem install/TELEGRAM-GROUP.md
 ├── install/
 │   ├── SETUP-PHONE.md     # thao tác tay: Termux + HyperOS + SSH + adb (làm TRƯỚC)
 │   ├── bootstrap.sh       # cài Hermes (pkg deps → clone → venv → pip)
-│   └── link-home.sh       # symlink home/{SOUL,config.yaml,skills} → ~/.hermes/
+│   ├── link-home.sh       # symlink home/ + profiles/*/ {SOUL,config.yaml,skills} → ~/.hermes/
+│   └── TELEGRAM-GROUP.md # setup bot #2 "Friday" cho group (profile friday)
 └── .env.example           # template secrets → copy sang ~/.hermes/.env (KHÔNG commit)
 ```
 

@@ -1,27 +1,33 @@
 #!/usr/bin/env bash
-# link-home.sh — gắn config-as-code từ repo vào $HERMES_HOME (~/.hermes).
+# link-home.sh — gắn config-as-code từ repo vào $HERMES_HOME và các profile.
 #
+#   home/         → $HERMES_HOME                  (default profile, ~/.hermes)
+#   profiles/<n>/ → $HERMES_HOME/profiles/<n>/    (named profile, vd "friday")
+#
+# Với mỗi profile, link:
 #   SOUL.md, config.yaml   → symlink file (config của ta thắng default install.sh)
 #   skills/<skill>/        → symlink TỪNG skill (KHÔNG link cả thư mục skills/,
 #                            vì install.sh sync skill bundled vào ~/.hermes/skills/;
 #                            link cả dir sẽ đổ skill bundled vào repo).
 #
-# KHÔNG đụng .env / state.db / memories/ (runtime, không version-control).
+# KHÔNG đụng .env / state.db / memories/ (runtime, không version-control) — kể cả
+# với named profile (mỗi profile giữ .env + state riêng ở local).
 # Idempotent: chạy lại an toàn. File default do install.sh tạo (config.yaml/SOUL.md)
 # sẽ được lùi sang *.bak rồi thay bằng symlink — không mất gì.
 set -euo pipefail
 
 HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_HOME="$(cd "$SCRIPT_DIR/../home" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"          # = hermes/
 
 usage() {
   cat <<EOF
 Usage: bash link-home.sh
 
-Symlink config-as-code từ $REPO_HOME vào $HERMES_HOME:
-  - SOUL.md, config.yaml  (file)
-  - skills/<skill>/        (từng skill một)
+Symlink config-as-code từ $REPO_ROOT vào $HERMES_HOME:
+  - home/         → \$HERMES_HOME            (default profile)
+  - profiles/<n>/ → \$HERMES_HOME/profiles/<n>/
+Mỗi profile link SOUL.md, config.yaml (file) + skills/<skill>/ (từng skill).
 Không chạm .env / *.db / memories/. Override đích bằng env HERMES_HOME.
 EOF
 }
@@ -32,14 +38,12 @@ case "${1:-}" in
   *) echo "Tham số lạ: $1" >&2; usage; exit 2 ;;
 esac
 
-mkdir -p "$HERMES_HOME"
-printf '→ HERMES_HOME = %s\n→ REPO_HOME   = %s\n\n' "$HERMES_HOME" "$REPO_HOME"
-
-# link_file <name> — symlink REPO_HOME/<name> → HERMES_HOME/<name>
+# link_file <src_dir> <dst_dir> <name> — symlink src_dir/name → dst_dir/name
 link_file() {
-  local item="$1" src="$REPO_HOME/$1" dst="$HERMES_HOME/$1"
+  local src_dir="$1" dst_dir="$2" item="$3"
+  local src="$src_dir/$item" dst="$dst_dir/$item"
   if [ ! -e "$src" ]; then
-    echo "  skip  $item — không có trong repo"
+    echo "  skip  $item — không có trong $src_dir"
     return
   fi
   if [ -e "$dst" ] && [ ! -L "$dst" ]; then            # file thật (vd default install.sh)
@@ -54,30 +58,59 @@ link_file() {
   echo "  link  $item → $src"
 }
 
-link_file SOUL.md
-link_file config.yaml
+# link_skills <src_dir> <dst_dir> — link từng skills/<skill>/ (giữ skill bundled cùng tồn tại)
+link_skills() {
+  local src_dir="$1" dst_dir="$2"
+  [ -d "$src_dir/skills" ] || return 0
+  mkdir -p "$dst_dir/skills"
+  local linked=0 d name dst
+  for d in "$src_dir"/skills/*/; do
+    name="$(basename "$d")"
+    dst="$dst_dir/skills/$name"
+    if [ -e "$dst" ] && [ ! -L "$dst" ]; then
+      echo "  ⚠ skills/$name là dir thật trong đích — bỏ qua (di chuyển nó nếu muốn link)"
+      continue
+    fi
+    ln -sfn "${d%/}" "$dst"
+    echo "  link  skills/$name → ${d%/}"
+    linked=1
+  done
+  [ "$linked" -eq 0 ] && echo "  (chưa có skill nào trong $src_dir/skills/)"
+}
 
-# skills: link từng subdir, để skill bundled của install.sh cùng tồn tại
-mkdir -p "$HERMES_HOME/skills"
+# link_profile <src_dir> <dst_dir>
+link_profile() {
+  local src_dir="$1" dst_dir="$2"
+  printf '\n→ %s\n   → %s\n' "$src_dir" "$dst_dir"
+  mkdir -p "$dst_dir"
+  link_file "$src_dir" "$dst_dir" SOUL.md
+  link_file "$src_dir" "$dst_dir" config.yaml
+  link_skills "$src_dir" "$dst_dir"
+}
+
+printf '→ HERMES_HOME = %s\n→ REPO_ROOT   = %s\n' "$HERMES_HOME" "$REPO_ROOT"
 shopt -s nullglob
-linked_skill=0
-for d in "$REPO_HOME"/skills/*/; do
+
+# Đích đã link (để in trạng thái cuối)
+LINKED_DIRS=("$HERMES_HOME")
+
+# 1) Default profile: home/ → $HERMES_HOME
+link_profile "$REPO_ROOT/home" "$HERMES_HOME"
+
+# 2) Named profiles: profiles/<name>/ → $HERMES_HOME/profiles/<name>/
+for d in "$REPO_ROOT"/profiles/*/; do
   name="$(basename "$d")"
-  dst="$HERMES_HOME/skills/$name"
-  if [ -e "$dst" ] && [ ! -L "$dst" ]; then
-    echo "  ⚠ skills/$name là dir thật trong ~/.hermes — bỏ qua (di chuyển nó nếu muốn link)"
-    continue
-  fi
-  ln -sfn "${d%/}" "$dst"
-  echo "  link  skills/$name → ${d%/}"
-  linked_skill=1
+  dst="$HERMES_HOME/profiles/$name"
+  link_profile "${d%/}" "$dst"
+  LINKED_DIRS+=("$dst")
 done
-[ "$linked_skill" -eq 0 ] && echo "  (chưa có skill nào trong repo home/skills/ — T7)"
 
 echo
 echo "Trạng thái:"
-for p in SOUL.md config.yaml skills; do
-  [ -e "$HERMES_HOME/$p" ] && ls -ld "$HERMES_HOME/$p" || true
+for base in "${LINKED_DIRS[@]}"; do
+  for p in SOUL.md config.yaml skills; do
+    [ -e "$base/$p" ] && ls -ld "$base/$p" || true
+  done
 done
 echo
-echo "Xong. Sau khi cài Hermes: hermes skills list"
+echo "Xong. Sau khi cài Hermes: hermes skills list  (profile: hermes -p <name> skills list)"
