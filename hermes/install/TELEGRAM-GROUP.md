@@ -27,13 +27,12 @@ DM riêng ──────────────────▶ Bot Jarvis  
 - `/setabouttext` → vd *"Made by TimezLab · github.com/t0lab"* (mục About trong profile bot).
 - `/setprivacy` → **Disable** (để bot thấy tin trong group, không chỉ tin mention nó). ⚠️ Sau khi đổi, **remove rồi add lại** bot vào group (Telegram cache privacy lúc join).
 
-### 2. Tạo profile + gắn config-as-code (trên phone)
+### 2. Gắn config-as-code (trên phone)
 ```bash
-hermes profile create friday           # tạo ~/.hermes/profiles/friday/ (config/.env/SOUL skeleton)
-cd ~/t0lab/assistants/hermes
-bash install/link-home.sh               # symlink profiles/friday/{SOUL.md,config.yaml} đè skeleton (backup .bak)
+cd ~/t0lab/assistants && git pull
+bash hermes/install/link-home.sh        # tự `hermes profile create friday` (nếu chưa có) + symlink config/SOUL
 ```
-> `link-home.sh` tự loop mọi `profiles/<name>/` trong repo → không cần sửa script khi thêm profile.
+> `link-home.sh` loop mọi `profiles/<name>/`, **tự tạo profile chưa có** (idempotent) rồi symlink. Thêm profile sau = drop 1 dir vào `hermes/profiles/` + chạy lại script, không cần lệnh tay.
 
 ### 3. Điền secrets — FILE RIÊNG của profile
 `~/.hermes/profiles/friday/.env` (KHÔNG phải `~/.hermes/.env`, KHÔNG commit):

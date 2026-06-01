@@ -2,7 +2,8 @@
 # link-home.sh — gắn config-as-code từ repo vào $HERMES_HOME và các profile.
 #
 #   home/         → $HERMES_HOME                  (default profile, ~/.hermes)
-#   profiles/<n>/ → $HERMES_HOME/profiles/<n>/    (named profile, vd "friday")
+#   profiles/<n>/ → $HERMES_HOME/profiles/<n>/    (named profile, vd "friday";
+#                                                 tự `hermes profile create` nếu chưa có)
 #
 # Với mỗi profile, link:
 #   SOUL.md, config.yaml   → symlink file (config của ta thắng default install.sh)
@@ -78,9 +79,15 @@ link_skills() {
   [ "$linked" -eq 0 ] && echo "  (chưa có skill nào trong $src_dir/skills/)"
 }
 
-# link_profile <src_dir> <dst_dir>
+# link_profile <src_dir> <dst_dir> [profile_name]
+# profile_name set (named profile) → tự `hermes profile create` nếu CHƯA có (idempotent).
+# Default profile (gọi không kèm name) bỏ qua — nó là ~/.hermes gốc của install.
 link_profile() {
-  local src_dir="$1" dst_dir="$2"
+  local src_dir="$1" dst_dir="$2" pname="${3:-}"
+  if [ -n "$pname" ] && [ ! -d "$dst_dir" ] && command -v hermes >/dev/null 2>&1; then
+    echo "  profile create $pname (chưa có)"
+    hermes profile create "$pname" </dev/null >/dev/null 2>&1 || true
+  fi
   printf '\n→ %s\n   → %s\n' "$src_dir" "$dst_dir"
   mkdir -p "$dst_dir"
   link_file "$src_dir" "$dst_dir" SOUL.md
@@ -97,11 +104,11 @@ LINKED_DIRS=("$HERMES_HOME")
 # 1) Default profile: home/ → $HERMES_HOME
 link_profile "$REPO_ROOT/home" "$HERMES_HOME"
 
-# 2) Named profiles: profiles/<name>/ → $HERMES_HOME/profiles/<name>/
+# 2) Named profiles: profiles/<name>/ → $HERMES_HOME/profiles/<name>/ (tự tạo nếu chưa có)
 for d in "$REPO_ROOT"/profiles/*/; do
   name="$(basename "$d")"
   dst="$HERMES_HOME/profiles/$name"
-  link_profile "${d%/}" "$dst"
+  link_profile "${d%/}" "$dst" "$name"
   LINKED_DIRS+=("$dst")
 done
 

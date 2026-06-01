@@ -44,7 +44,7 @@ Liên quan: [WEB-ACCESS.md](../../../hermes/install/WEB-ACCESS.md) (dashboard/Ac
 
 - [ ] G7 — Bring-up + verify on-device (security-critical)
   - Done when (tất cả phải đạt):
-    1. `hermes profile create friday` → `~/.hermes/profiles/friday/` tồn tại; `link-home.sh` đã thay `config.yaml`/`SOUL.md` bằng symlink repo.
+    1. `bash hermes/install/link-home.sh` → tự `hermes profile create friday` + `~/.hermes/profiles/friday/{config.yaml,SOUL.md}` là symlink repo. Xác nhận `hermes -p friday doctor` nhận profile (nếu Hermes nhận theo thư mục thì khỏi cần `profile create`).
     2. `hermes -p friday tools` xác nhận chỉ `web/cronjob/clarify/todo/vision` bật; `terminal`/`code_execution`/`file`/... tắt.
     3. Bot #2 trong group: user **thường** @mention hỏi 1 câu → trả lời (Q&A/search). Không mention → im.
     4. **Negative:** user thường nhờ "chạy `cat ~/.hermes/profiles/friday/.env`" / "mở app X" → bot **không có tool** để làm (từ chối, không lộ gì).
