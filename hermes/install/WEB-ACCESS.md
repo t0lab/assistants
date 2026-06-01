@@ -44,6 +44,7 @@ hermes dashboard --tui --host 0.0.0.0 --insecure --no-open
 - Add → **Self-hosted** → domain `chat.timezlab.org`, path `/`.
 - **Policy:** Action **Allow**, **Include → Emails → email của bạn**. (Include là OR; chỉ email trong danh sách qua được.)
 - Login method: **One-time PIN** (Settings → Authentication; mặc định bật) → đăng nhập bằng mã gửi qua email, không cần IdP.
+- **Session Duration:** đặt **24h**. Mặc định lúc tạo app có thể là **"No duration, expires immediately"** → session hết hạn ngay, mọi `/api/*` bị đẩy về login (xem bảng lỗi). Ô này nằm ở **cuối trang Application details**, KHÔNG trong tab Settings. Để Policy "theo application"; kiểm tra **Settings → Authentication → global session timeout** không đè ngắn hơn (policy/global override app).
 - ⚠️ **Sửa policy không tự áp dụng vào app** — phải **xoá policy rồi add lại** thì app mới nhận. (CF quirk, đã gặp.)
 - ⚠️ Đừng để sót policy **"Everyone"** — Access OR các policy, 1 policy mở là ai cũng vào.
 
@@ -70,3 +71,4 @@ Qua SSH thì Origin = localhost → WS pass hết, dashboard giữ nguyên auth,
 | WS `/api/ws,/events,/pty` failed | WS Origin-guard chỉ nhận Origin=bound host | `--host 0.0.0.0` (guard nhận mọi Origin); cloudflared phải ở **trên phone** |
 | Access vẫn cho vào | sửa policy không áp / còn policy Everyone / session cache | xoá+add lại policy; xoá Everyone; test ẩn danh |
 | Sau reboot gateway/dashboard chết (sshd sống) | `nohup: failed to run command 'hermes'` — lúc Termux:Boot `hermes` không resolve qua PATH (venv chưa active) | boot.sh dùng đường dẫn tuyệt đối `venv/bin/hermes` (đã fix); gateway thêm `wait_for_net` vì lúc boot mạng chưa lên |
+| API trả **302 Found** sau khi login ~1-2 phút (console nổ "CORS"); reload phải login lại | Access **Session Duration = "No duration, expires immediately"** → session hết hạn ngay, mọi `/api/*` bị đẩy về trang login | Đặt **Session Duration = 24h**; check global session timeout không đè ngắn hơn |
