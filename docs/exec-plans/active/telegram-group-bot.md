@@ -21,6 +21,7 @@ Liên quan: [WEB-ACCESS.md](../../../hermes/install/WEB-ACCESS.md) (dashboard/Ac
 
 - [x] G2 — Config-as-code cho profile `friday` ✅ 2026-06-01
   - Done when: `hermes/profiles/friday/SOUL.md` (persona "trợ lý Q&A của group", tiếng Việt, nêu rõ phạm vi: trả lời/search/cron, không thao tác phone/secrets) + `hermes/profiles/friday/config.yaml` (reuse block `providers.litellm` + `model`; `security.allow_lazy_installs: false`; `agent.disabled_toolsets: [terminal, code_execution, file, debugging, computer_use, memory, session_search, skills, delegation, messaging, discord, discord_admin, spotify, homeassistant, feishu_doc, feishu_drive, yuanbao]`; `gateway.platforms.telegram.extra` với `group_allowed_chats` + `require_mention: true`; **KHÔNG** `mcp_servers`) + `hermes/profiles/friday/skills/.gitkeep`.
+    > ⚠️ Amendment 2026-06-01 (G7 on-device): block `gateway.platforms.telegram.extra` **đã gỡ** — bản Hermes bỏ qua nó; telegram allowlist/mention chuyển sang `.env` (`TELEGRAM_GROUP_ALLOWED_CHATS`/`TELEGRAM_REQUIRE_MENTION`). Xem Decisions log.
   - Files: `hermes/profiles/friday/{SOUL.md, config.yaml, skills/.gitkeep}`
   - ⚠️ `config.yaml` KHÔNG chứa token/secret. `group_allowed_chats` để placeholder + comment cách lấy chat id.
 
@@ -42,7 +43,7 @@ Liên quan: [WEB-ACCESS.md](../../../hermes/install/WEB-ACCESS.md) (dashboard/Ac
   - Done when: thêm tài liệu setup bot friday (BotFather tắt Group Privacy + remove/re-add bot vào group; `hermes profile create friday`; `link-home.sh`; `hermes -p friday tools` chọn allowlist; điền `.env`; thêm vào group) + verify steps; ghi rõ caveat re-audit toolset khi nâng cấp Hermes. Vị trí: section mới trong `hermes/README.md` hoặc file `hermes/install/TELEGRAM-GROUP.md` (link từ README + persistence/README).
   - Files: `hermes/install/TELEGRAM-GROUP.md` (hoặc README), cập nhật `hermes/README.md`, `hermes/install/persistence/README.md`
 
-- [ ] G7 — Bring-up + verify on-device (security-critical)
+- [x] G7 — Bring-up + verify on-device (security-critical) ✅ 2026-06-01 (core: #1 #2 #3 đạt; #4 negative + #5 cron-escalation = residual)
   - Done when (tất cả phải đạt):
     1. `bash hermes/install/link-home.sh` → tự `hermes profile create friday` + `~/.hermes/profiles/friday/{config.yaml,SOUL.md}` là symlink repo. Xác nhận `hermes -p friday doctor` nhận profile (nếu Hermes nhận theo thư mục thì khỏi cần `profile create`).
     2. `hermes -p friday tools` xác nhận chỉ `web/cronjob/clarify/todo/vision` bật; `terminal`/`code_execution`/`file`/... tắt.
@@ -60,11 +61,11 @@ Liên quan: [WEB-ACCESS.md](../../../hermes/install/WEB-ACCESS.md) (dashboard/Ac
 ## Decisions log
 
 - 2026-06-01: Tách **profile `friday`** (bot #2) thay vì gate trong 1 bot. Lý do: Hermes không có per-user tool gating, approval đẩy về người trigger → rule prompt không phải boundary; tool nhạy cảm chỉ tắt được ở mức profile. Toolset 2 lớp: `hermes tools` chọn allowlist (`web/cronjob/clarify/todo/vision`) + `agent.disabled_toolsets` denylist cứng; không `mcp_servers.device`. Config-as-code generalize `profiles/<name>/`. Đầy đủ + alternatives ở ADR.
+- 2026-06-01 (on-device G7): bài học trả giá khi dựng Friday — (a) **`disabled_toolsets` được honor** (vế "hợp lệ" pass). (b) Bản Hermes cài đọc telegram allowlist/mention qua **ENV** (`TELEGRAM_GROUP_ALLOWED_CHATS`/`TELEGRAM_REQUIRE_MENTION`), **bỏ qua** `gateway.platforms.telegram.extra` → đã chuyển sang `.env`, bỏ block đó khỏi `config.yaml`. (c) **Group Privacy phải DISABLE** ở BotFather + remove/add lại bot — ON thì @mention không tới bot (thủ phạm chính, mất nhiều vòng debug). (d) `.env` **không** để comment cùng dòng (dính vào value, từng làm hỏng token → 404). (e) chat-id lấy từ `getUpdates` của bot, không từ URL web. (f) đổi `.env` phải restart gateway. Tất cả đã vào `TELEGRAM-GROUP.md` (bảng lỗi).
 
 ## Blockers
 
-- G7 cần **on-device** (Termux) + **bot Telegram #2** (BotFather). G2–G6 làm được trên máy dev.
-- Câu hỏi mở verify ở G7.5: `disabled_toolsets` có chặn được cron `enabled_toolsets` escalation không — quyết định cron có ở `friday` hay không phụ thuộc kết quả này.
+- ✅ G7 core đạt on-device 2026-06-01 (Friday trả lời group khi @mention; tool nhạy cảm tắt). Residual: verify #4 (negative — gần như chắc vì tool đã tắt) + #5 cron `enabled_toolsets` escalation (quyết định giữ/bỏ `cronjob` phụ thuộc kết quả). + G8 amendment device-control docs.
 
 ## Out of scope
 

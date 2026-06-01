@@ -65,14 +65,12 @@ agent:
 #
 # ⚠️ KHÔNG khai mcp_servers (đặc biệt KHÔNG `device`) — bot công khai không chạm phone.
 
-# ── TELEGRAM: chỉ phục vụ group, bắt buộc @mention ───────────────────────────
-# Keys phải đúng path gateway.platforms.telegram.extra (đặt sai cấp → bị drop âm thầm).
-# Token bot #2 ở .env (TELEGRAM_BOT_TOKEN); chat-id KHÔNG phải secret nên để ở đây (auditable).
-gateway:
-  platforms:
-    telegram:
-      extra:
-        require_mention: true              # chỉ trả lời khi @mention / reply / slash command
-        group_allowed_chats:
-          - "REPLACE_WITH_GROUP_CHAT_ID"   # -100… ; lấy qua @userinfobot / forward 1 tin vào @JsonDumpBot
-        # group_allow_from: ["*"]          # mặc định: mọi thành viên trong group trên đều dùng được
+# ── TELEGRAM: cấu hình qua ENV trong .env (KHÔNG phải config.yaml) ────────────
+# Verified on-device 2026-06-01: bản Hermes này đọc allowlist/mention telegram qua
+# ENV VARS, KHÔNG đọc block `gateway.platforms.telegram.extra` (path đó bị bỏ qua).
+# Đặt trong ~/.hermes/profiles/friday/.env (chi tiết: install/TELEGRAM-GROUP.md):
+#   TELEGRAM_GROUP_ALLOWED_CHATS=-100…   # mọi thành viên group này được phép
+#   TELEGRAM_REQUIRE_MENTION=true        # chỉ trả lời khi @mention
+#   TELEGRAM_ALLOWED_USERS=<id>          # (tuỳ chọn) cho DM owner
+# ⚠️ BotFather: Group Privacy phải DISABLE + remove/add lại bot — nếu không, @mention
+#    trong group KHÔNG tới bot (privacy chặn delivery). .env KHÔNG để comment cùng dòng.

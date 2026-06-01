@@ -52,8 +52,9 @@ Lưu ý prefix: proxy phục vụ id có sẵn `openai/` (vd `openai/Qwen/Qwen3.
 - **Chạy gateway từng profile:** `hermes -p <name> gateway` (foreground; Termux dùng nohup trong `boot.sh`, loop `~/.hermes/profiles/*/`). KHÔNG có `--all` native.
 - **Token Telegram phải KHÁC nhau mỗi profile** — Hermes từ chối gateway thứ 2 nếu trùng (Telegram 1 getUpdates/token → 409 Conflict).
 - **Toolset:** KHÔNG có allowlist mức profile, chỉ denylist `agent.disabled_toolsets` (áp SAU per-platform, không override được). Per-platform select qua `hermes -p <name> tools` (persist vào config.yaml) → re-audit khi nâng cấp.
-- **Telegram group keys** ở `gateway.platforms.telegram.extra` (`group_allowed_chats`, `group_allow_from`, `require_mention`, `mention_patterns`) — đặt sai cấp bị drop âm thầm. BotFather: Group Privacy OFF + remove/re-add bot vào group.
-- Dự án dùng: profile `friday` (bot group least-privilege, agent Friday). Setup: `hermes/install/TELEGRAM-GROUP.md`.
+- **Telegram group qua ENV trong `.env`** (verified on-device 2026-06-01 — bản cài **bỏ qua** `gateway.platforms.telegram.extra` trong config.yaml; đừng tin docs mới): `TELEGRAM_GROUP_ALLOWED_CHATS=-100…` (mọi member được phép), `TELEGRAM_REQUIRE_MENTION=true`, `TELEGRAM_ALLOWED_USERS=<id>` (DM). Var tên chuẩn xem `grep -rohE "TELEGRAM_[A-Z_]+" ~/.hermes/hermes-agent`.
+- **BotFather Group Privacy phải DISABLE** + remove/add lại bot — nếu ON, @mention trong group KHÔNG tới bot (thủ phạm hay gặp). `.env` KHÔNG để comment cùng dòng (dính value). Đổi `.env` → restart gateway. chat-id lấy từ `getUpdates` của bot (khác URL web).
+- Dự án dùng: profile `friday` (bot group least-privilege, agent Friday). Setup + bảng lỗi: `hermes/install/TELEGRAM-GROUP.md`.
 
 ## Migrate từ OpenClaw
 `hermes claw migrate` (import SOUL/MEMORY/skills/model/MCP từ `~/.openclaw`). Flags: `--source <path>`, `--dry-run`, `--migrate-secrets`.

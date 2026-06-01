@@ -26,13 +26,13 @@ Research 2026-06-01 (docs upstream Hermes Agent) cho ra các sự thật quyết
 Tách một **profile `friday`** riêng (bot Telegram #2), least-privilege, phục vụ group qua mention-gating. Bot owner giữ nguyên ở default profile, DM-only.
 
 1. **Profile mới `friday`** = `~/.hermes/profiles/friday/`; agent tên **Friday** (bot group). Default profile (`~/.hermes/`, full quyền) **không đổi** — agent tên **Jarvis** (bot owner). Usernames Telegram: `@timezlab_friday_bot` / `@timezlab_jarvis_bot`.
-2. **Telegram của `friday`:** `group_allowed_chats = <chat id group>`, `require_mention: true`. Bot owner default giữ `TELEGRAM_ALLOWED_USERS = <owner>`, **không** group.
+2. **Telegram của `friday` qua ENV trong `.env`** (verified on-device 2026-06-01 — bản Hermes này KHÔNG đọc `gateway.platforms.telegram.extra` trong config.yaml): `TELEGRAM_GROUP_ALLOWED_CHATS=<chat-id>` (mọi member được phép) + `TELEGRAM_REQUIRE_MENTION=true`. **BotFather: Group Privacy phải DISABLE + remove/add lại bot** — nếu ON, @mention trong group không tới bot. Bot owner default giữ `TELEGRAM_ALLOWED_USERS=<owner>`, **không** group.
 3. **Toolset 2 lớp (defense-in-depth, vì không có allowlist native):**
    - **Lớp chọn (allowlist-style):** qua `hermes -p friday tools`, chỉ bật cho platform telegram: `web` (search/extract), `cronjob`, `clarify`, `todo`, `vision`. *Không* bật media-gen (`image_gen`/`video_gen`/`tts`) lúc đầu (cost/abuse — thêm sau nếu cần).
    - **Lớp denylist cứng:** `agent.disabled_toolsets` liệt kê mọi thứ leak key / execute / điều khiển tài khoản khác: `terminal, code_execution, file, debugging, computer_use, memory, session_search, skills, delegation, messaging, discord, discord_admin, spotify, homeassistant, feishu_doc, feishu_drive, yuanbao`.
    - **MCP:** config của `friday` **không** khai `mcp_servers.device` (và mọi MCP khác) → không có tool device.
 4. **Config-as-code generalize:** repo có `hermes/profiles/<name>/{SOUL.md, config.yaml, skills/}`; `link-home.sh` link **từng file** vào `~/.hermes/profiles/<name>/` (KHÔNG link cả thư mục runtime — `.env`/state/memories ở lại local). `boot.sh` **loop** qua `~/.hermes/profiles/*/`, profile nào có `TELEGRAM_BOT_TOKEN` thì start gateway riêng (`hermes -p <name> gateway`).
-5. **Allowlist version-controlled:** `group_allowed_chats` + `require_mention` đặt trong `config.yaml` (commit, auditable); chỉ **token** ở `.env` (không commit).
+5. **Telegram allowlist/mention ở `.env`** (không trong config.yaml — bản này bỏ qua nested path): `TELEGRAM_GROUP_ALLOWED_CHATS`, `TELEGRAM_REQUIRE_MENTION`, token — tất cả trong `~/.hermes/profiles/friday/.env` (không commit). `.env` **không để comment cùng dòng** (dính vào giá trị). Đổi `.env` phải restart gateway.
 
 ## Alternatives considered
 
@@ -57,11 +57,12 @@ Tách một **profile `friday`** riêng (bot Telegram #2), least-privilege, ph�
 - Không có allowlist native → **denylist phải bảo trì**: Hermes update thêm toolset default-on có thể mở lỗ → **bắt buộc re-audit khi nâng cấp**.
 - Cron mở cho group = bề mặt **lạm dụng** (spam job, tốn token model) kể cả khi tool đã bị giới hạn.
 - 2 profile = 2 `.env` (2 lần điền `OPENAI_API_KEY` LiteLLM) cần giữ đồng bộ.
+- **Schema telegram khác docs:** bản cài đọc qua ENV (`TELEGRAM_GROUP_ALLOWED_CHATS`…), KHÔNG đọc `gateway.platforms.telegram.extra` (docs mới). Phải verify on-device khi nâng cấp; allowlist nằm ở `.env` nên kém "auditable trong git" hơn dự kiến.
 
 **Must now be true:**
-- Profile `friday` **KHÔNG bao giờ** nạp: `terminal`, `code_execution`, `file`, `memory`, `messaging`, device MCP, hay tool điều khiển tài khoản khác.
-- `agent.disabled_toolsets` là **sàn cứng** — đã verify cron **không** override được qua `enabled_toolsets`. (Nếu override được → **tắt `cronjob`** cho `friday`.)
-- `group_allowed_chats` + `require_mention: true` bắt buộc; **không** dùng `*`.
+- Profile `friday` **KHÔNG bao giờ** nạp: `terminal`, `code_execution`, `file`, `browser`, `memory`, `messaging`, device MCP, hay tool điều khiển tài khoản khác. (toolset đã verify on-device 2026-06-01.)
+- `agent.disabled_toolsets` là **sàn cứng** — cron escalation qua `enabled_toolsets` vẫn cần verify (G7 residual). (Nếu override được → **tắt `cronjob`** cho `friday`.)
+- `TELEGRAM_GROUP_ALLOWED_CHATS` + `TELEGRAM_REQUIRE_MENTION=true` (trong `.env`) bắt buộc; **BotFather Group Privacy = DISABLE** + remove/add lại bot.
 - Token bot #2 chỉ ở `~/.hermes/profiles/friday/.env`, **không commit**.
 - Bot owner (default profile) giữ `TELEGRAM_ALLOWED_USERS = owner`, DM-only — **không** thêm `group_allowed_chats`.
 - Mỗi lần nâng cấp Hermes: chạy lại `hermes -p friday tools` xác nhận allowlist còn đúng (catalog toolset không phình thêm thứ nguy hiểm).

@@ -10,7 +10,7 @@ Quyết định + lý do (vì sao tách bot, không gate trong 1 bot): ADR [`tel
 Group Telegram ──@mention──▶ Bot Friday  (@timezlab_friday_bot, token riêng)
                              └─ hermes -p friday gateway   (profile ~/.hermes/profiles/friday/)
                                 ├─ toolset: web/search/cronjob/clarify/todo/vision  (KHÔNG terminal/code_exec/file/device)
-                                └─ group_allowed_chats + require_mention
+                                └─ .env: TELEGRAM_GROUP_ALLOWED_CHATS + TELEGRAM_REQUIRE_MENTION; BotFather: Group Privacy OFF
 
 DM riêng ──────────────────▶ Bot Jarvis  (@timezlab_jarvis_bot, token cũ)
                              └─ hermes gateway              (default profile ~/.hermes/)
@@ -25,7 +25,7 @@ DM riêng ──────────────────▶ Bot Jarvis  
 - `/newbot` → display name **`Friday · TimezLab`**, username **`@timezlab_friday_bot`** (phải end `bot`, unique toàn cầu; backup: `@timezlabfridaybot` / `@friday_timezlab_bot`). Lưu **token** (KHÁC token bot Jarvis — Hermes từ chối nếu trùng).
 - `/setdescription` → vd *"Trợ lý nhóm của TimezLab — hỏi đáp, tra cứu, đặt nhắc."* (hiện ở màn hình trống trước /start).
 - `/setabouttext` → vd *"Made by TimezLab · github.com/t0lab"* (mục About trong profile bot).
-- `/setprivacy` → **Disable** (để bot thấy tin trong group, không chỉ tin mention nó). ⚠️ Sau khi đổi, **remove rồi add lại** bot vào group (Telegram cache privacy lúc join).
+- `/setprivacy` → **Disable** — **BẮT BUỘC** (verified on-device: Privacy ON thì @mention trong group **KHÔNG tới bot** → không bao giờ trả lời). Disable = bot nhận hết tin group; `TELEGRAM_REQUIRE_MENTION=true` lo việc chỉ *trả lời* khi mention. ⚠️ Sau khi đổi, **remove rồi add lại** bot vào group (Telegram cache privacy lúc join).
 
 ### 2. Gắn config-as-code (trên phone)
 ```bash
@@ -34,16 +34,28 @@ bash hermes/install/link-home.sh        # tự `hermes profile create friday` (n
 ```
 > `link-home.sh` loop mọi `profiles/<name>/`, **tự tạo profile chưa có** (idempotent) rồi symlink. Thêm profile sau = drop 1 dir vào `hermes/profiles/` + chạy lại script, không cần lệnh tay.
 
-### 3. Điền secrets — FILE RIÊNG của profile
-`~/.hermes/profiles/friday/.env` (KHÔNG phải `~/.hermes/.env`, KHÔNG commit):
+### 3. Điền `.env` — FILE RIÊNG của profile (secret + cấu hình telegram)
+`~/.hermes/profiles/friday/.env` (KHÔNG phải `~/.hermes/.env`, KHÔNG commit).
+⚠️ **KHÔNG để comment cùng dòng** (`KEY=value  # ...`) — giá trị dễ dính cả comment (đã làm hỏng token 1 lần). Comment để **dòng riêng** bắt đầu bằng `#`.
 ```bash
-OPENAI_API_KEY=sk-...                   # dùng lại Virtual Key LiteLLM như default
-TELEGRAM_BOT_TOKEN=987654321:XYZ...     # token bot Friday ở bước 1
+OPENAI_API_KEY=sk-...
+TELEGRAM_BOT_TOKEN=<token bot Friday, không kèm gì>
+TELEGRAM_REQUIRE_MENTION=true
+TELEGRAM_ALLOWED_USERS=<your_user_id>
+# TELEGRAM_GROUP_ALLOWED_CHATS điền ở bước 4 (sau khi có chat-id)
 ```
+> Telegram allowlist/mention đi qua **ENV ở đây**, KHÔNG qua `config.yaml` (bản Hermes này bỏ qua `gateway.platforms.telegram.extra`). `your_user_id` lấy từ @userinfobot (để bạn DM riêng Friday; có thể bỏ).
 
-### 4. Điền group chat id
-- Add bot Friday (và tạm @userinfobot / forward 1 tin vào @JsonDumpBot) vào group → lấy **chat id** dạng `-100…`.
-- Sửa `hermes/profiles/friday/config.yaml` → `gateway.platforms.telegram.extra.group_allowed_chats` thay `REPLACE_WITH_GROUP_CHAT_ID` bằng id đó. (Chat id không phải secret → để trong config, auditable.)
+### 4. Lấy group chat-id (từ chính bot, KHÔNG lấy từ URL web)
+Add bot Friday vào group (đã Disable privacy + re-add ở bước 1), gửi `@timezlab_friday_bot test`. Rồi — **gateway phải TẮT** để getUpdates đọc được hàng đợi:
+```bash
+TG=$(grep -m1 '^TELEGRAM_BOT_TOKEN=' ~/.hermes/profiles/friday/.env | sed 's/^[^=]*=//; s/#.*//; s/[" ]//g')
+curl -s "https://api.telegram.org/bot$TG/getUpdates" | python3 -m json.tool
+```
+Tìm message `chat.type: "supergroup"`, lấy **`chat.id`** (dạng `-100…`). ⚠️ Dùng id này, KHÔNG lấy từ URL `web.telegram.org` (có thể khác Bot-API id). Nếu getUpdates **rỗng** → privacy chưa Disable (bước 1) hoặc gateway chưa tắt. Thêm vào `.env`:
+```bash
+TELEGRAM_GROUP_ALLOWED_CHATS=-100...
+```
 
 ### 5. Chốt allowlist toolset (quan trọng — bảo mật)
 ```bash
@@ -56,6 +68,7 @@ hermes -p friday tools                  # bật: web, search, cronjob, clarify, 
 ```bash
 hermes -p friday gateway                # tay (test)
 ```
+⚠️ **Mỗi lần sửa `.env` phải restart gateway** (Ctrl-C + chạy lại) mới có hiệu lực — gateway chỉ nạp `.env` lúc start.
 Tự động sau reboot: `boot.sh` đã loop `~/.hermes/profiles/*/`, profile nào có `TELEGRAM_BOT_TOKEN` thì tự start gateway riêng (log `~/.hermes/logs/gateway-friday.log`). Restart: `sh ~/.termux/boot/boot.sh --restart`.
 
 ## Verify (bắt buộc — done-condition bảo mật, G7)
@@ -70,8 +83,11 @@ Tự động sau reboot: `boot.sh` đã loop `~/.hermes/profiles/*/`, profile n�
 
 | Triệu chứng | Nguyên nhân | Fix |
 |-------------|-------------|-----|
-| Friday không thấy tin trong group (chỉ thấy khi mention) | Group Privacy còn ON, hoặc đổi rồi chưa re-add | BotFather `/setprivacy` → Disable; **remove + add lại** bot vào group |
-| Gateway #2 không start, log báo trùng token | 2 profile dùng chung token Telegram | Mỗi profile 1 token bot riêng (Hermes chặn trùng — 1 token chỉ 1 getUpdates) |
-| Friday trả lời cả tin không mention | `require_mention` chưa ăn (sai cấp YAML?) | Keys phải đúng `gateway.platforms.telegram.extra.*`; đặt sai cấp bị **drop âm thầm** |
-| Sau nâng cấp Hermes, tool lạ xuất hiện | Không có allowlist native → toolset mới **default-on** | **Re-audit** `hermes -p friday tools` mỗi lần nâng cấp; thêm tool nguy hiểm mới vào `disabled_toolsets` |
-| Cron job chạy được terminal | `disabled_toolsets` không phải sàn cứng cho cron | Bỏ `cronjob` khỏi allowlist friday (xem Verify #4) |
+| @mention trong group bot **không nhận** (getUpdates chỉ có DM, không có tin group) | Group Privacy còn **ON** → Telegram không giao tin group cho bot | `/setprivacy`→**Disable** + **remove/add lại** bot (bài học chính: privacy ON là thủ phạm) |
+| DM trả lời, **group không** | allowlist đặt sai chỗ (`gateway.platforms.telegram.extra` bị bỏ qua) hoặc sai tên var | đặt **`TELEGRAM_GROUP_ALLOWED_CHATS`** (có `GROUP_`) trong `.env`; KHÔNG phải `TELEGRAM_ALLOWED_CHATS` |
+| Sửa `.env` mà bot không đổi hành vi | gateway chỉ nạp `.env` lúc start | restart gateway sau **mỗi** lần sửa `.env` |
+| `getUpdates` trả **404** / token "dài bất thường" (~85+) | `.env` có **comment cùng dòng** → giá trị dính `# ...` | bỏ comment cùng dòng; để comment ở dòng riêng |
+| chat-id sai → group bị deny | lấy id từ URL `web.telegram.org` (khác Bot-API id) | lấy `chat.id` từ `getUpdates` của chính bot |
+| Gateway #2 không start, báo trùng token | 2 profile dùng chung token | mỗi profile 1 token riêng (Hermes chặn — 1 token chỉ 1 getUpdates) |
+| Sau nâng cấp Hermes, tool lạ bật | không có allowlist native → tool mới **default-on** | re-audit `hermes -p friday tools`; thêm tool nguy hiểm mới vào `disabled_toolsets` |
+| Cron job chạy được terminal | `disabled_toolsets` không phải sàn cứng cho cron | bỏ `cronjob` khỏi allowlist friday (Verify #4) |
