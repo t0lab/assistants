@@ -148,3 +148,179 @@ def current_app() -> dict:
                     pkg, activity = m.group(1), m.group(2)
                     break
     return {"package": pkg, "activity": activity, "raw": raw}
+
+
+# ----------------------------------------------------------------------------
+# Tool WRITE (action). Gọi qua cổng policy ở server.py (allow-list + write_enabled).
+# Lệnh chỉ gồm số/định danh (không quote/pipe) để an toàn khi qua `rish -c`.
+# ----------------------------------------------------------------------------
+
+# Tên keyevent thông dụng → mã (cho key()/nav()).
+KEYEVENTS = {
+    "back": 4, "home": 3, "recent": 187, "enter": 66, "tab": 61,
+    "del": 67, "power": 26, "volup": 24, "voldown": 25, "menu": 82, "search": 84,
+}
+
+
+def tap(x: int, y: int) -> str:
+    out, err, rc = run_shell(f"input tap {int(x)} {int(y)}")
+    if rc != 0:
+        raise ShellError(f"tap fail: {err.strip() or out.strip()}")
+    return f"tapped ({int(x)},{int(y)})"
+
+
+def swipe(x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> str:
+    out, err, rc = run_shell(
+        f"input swipe {int(x1)} {int(y1)} {int(x2)} {int(y2)} {int(duration_ms)}"
+    )
+    if rc != 0:
+        raise ShellError(f"swipe fail: {err.strip() or out.strip()}")
+    return f"swiped ({x1},{y1})->({x2},{y2})"
+
+
+def key(keycode) -> str:
+    """keycode: số (vd 4) hoặc tên (back/home/recent/enter/del...)."""
+    code = KEYEVENTS.get(str(keycode).strip().lower(), keycode)
+    out, err, rc = run_shell(f"input keyevent {code}")
+    if rc != 0:
+        raise ShellError(f"keyevent {keycode} fail: {err.strip() or out.strip()}")
+    return f"keyevent {keycode}"
+
+
+def nav(target: str) -> str:
+    """Điều hướng hệ thống: back | home | recent."""
+    t = target.strip().lower()
+    if t not in ("back", "home", "recent"):
+        raise ShellError("nav chỉ nhận: back | home | recent")
+    key(t)
+    return f"nav {t}"
+
+
+def input_text(text: str) -> str:
+    """Gõ text (kể cả tiếng Việt/Unicode) qua ADBKeyBoard — broadcast base64, tránh quoting.
+
+    Cần ADBKeyBoard đã cài + đang là IME (xem install/device/adbkeyboard.md). `input text`
+    thường KHÔNG gõ được Unicode nên ta luôn dùng đường này.
+    """
+    b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
+    out, err, rc = run_shell(f"am broadcast -a ADB_INPUT_B64 --es msg {b64}")
+    if rc != 0:
+        raise ShellError(f"input_text fail: {err.strip() or out.strip()}")
+    # am luôn 'result=0' kể cả khi không receiver → không khẳng định được đã gõ.
+    # Nếu chữ không hiện: ADBKeyBoard chưa cài / chưa set làm IME.
+    return f"sent {len(text)} ký tự (qua ADBKeyBoard)"
+
+
+def open_app(package: str) -> str:
+    """Mở app theo package (monkey, không cần biết activity)."""
+    out, err, rc = run_shell(
+        f"monkey -p {package} -c android.intent.category.LAUNCHER 1"
+    )
+    blob = out + err
+    if rc != 0 or "No activities found" in blob or "aborted" in blob:
+        raise ShellError(f"open_app '{package}' fail: {blob.strip()}")
+    return f"opened {package}"
+
+
+def open_url(url: str) -> str:
+    """Mở URL/deeplink qua VIEW intent (https://, market://, geo:, https://wa.me/..., tel: prefill...)."""
+    out, err, rc = run_shell(
+        f"am start -a android.intent.action.VIEW -d {shlex.quote(url)}"
+    )
+    if rc != 0 or "Error" in (out + err):
+        raise ShellError(f"open_url fail: {(err or out).strip()}")
+    return f"opened url: {url}"
+
+
+def kill_app(package: str) -> str:
+    """Tắt (force-stop) một app theo package."""
+    out, err, rc = run_shell(f"am force-stop {shlex.quote(package)}")
+    if rc != 0:
+        raise ShellError(f"kill_app '{package}' fail: {(err or out).strip()}")
+    return f"force-stopped {package}"
+
+
+def toggle(target: str, on: bool) -> str:
+    """Bật/tắt: wifi | bluetooth | airplane | data."""
+    t = target.strip().lower()
+    state = "enable" if on else "disable"
+    if t == "wifi":
+        cmd = f"svc wifi {state}"
+    elif t == "bluetooth":
+        cmd = f"svc bluetooth {state}"
+    elif t == "data":
+        cmd = f"svc data {state}"
+    elif t == "airplane":
+        cmd = f"cmd connectivity airplane-mode {state}"
+    else:
+        raise ShellError("toggle target: wifi | bluetooth | airplane | data")
+    out, err, rc = run_shell(cmd)
+    if rc != 0:
+        raise ShellError(f"toggle {target} fail: {(err or out).strip()}")
+    return f"{target} {'on' if on else 'off'}"
+
+
+def brightness(value: int) -> str:
+    """Đặt độ sáng màn hình 0–255."""
+    v = max(0, min(255, int(value)))
+    out, err, rc = run_shell(f"settings put system screen_brightness {v}")
+    if rc != 0:
+        raise ShellError(f"brightness fail: {(err or out).strip()}")
+    return f"brightness {v}"
+
+
+def volume(action: str) -> str:
+    """Âm lượng: up | down | mute (qua keyevent)."""
+    code = {"up": 24, "down": 25, "mute": 164}.get(action.strip().lower())
+    if code is None:
+        raise ShellError("volume: up | down | mute")
+    return key(code)
+
+
+def lock_screen() -> str:
+    """Khoá/tắt màn hình (KEYCODE_SLEEP 223, fallback POWER 26)."""
+    _o, _e, rc = run_shell("input keyevent 223")
+    if rc != 0:
+        run_shell("input keyevent 26")
+    return "screen locked"
+
+
+def call(number: str) -> str:
+    """Gọi điện tới số (đặt cuộc gọi thật)."""
+    out, err, rc = run_shell(
+        f"am start -a android.intent.action.CALL -d {shlex.quote('tel:' + number)}"
+    )
+    if rc != 0 or "Error" in (out + err):
+        raise ShellError(f"call fail: {(err or out).strip()}")
+    return f"calling {number}"
+
+
+def sms_compose(number: str, body: str = "") -> str:
+    """Mở trình soạn SMS đã điền sẵn (CHƯA gửi — cần tap gửi, hoặc dùng termux-sms-send để gửi thật)."""
+    cmd = f"am start -a android.intent.action.SENDTO -d {shlex.quote('sms:' + number)}"
+    if body:
+        cmd += f" --es sms_body {shlex.quote(body)}"
+    out, err, rc = run_shell(cmd)
+    if rc != 0 or "Error" in (out + err):
+        raise ShellError(f"sms_compose fail: {(err or out).strip()}")
+    return f"soạn SMS tới {number} (chưa gửi)"
+
+
+def device_info() -> dict:
+    """Thông tin máy + pin: {model, android, battery_level, battery_status}."""
+    model, _e, _r = run_shell("getprop ro.product.model")
+    ver, _e, _r = run_shell("getprop ro.build.version.release")
+    batt, _e, _r = run_shell("dumpsys battery")
+    level = status = ""
+    for line in batt.splitlines():
+        s = line.strip()
+        if s.startswith("level:"):
+            level = s.split(":", 1)[1].strip()
+        elif s.startswith("status:"):
+            status = s.split(":", 1)[1].strip()
+    return {
+        "model": model.strip(),
+        "android": ver.strip(),
+        "battery_level": level,
+        "battery_status": status,
+    }

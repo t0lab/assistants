@@ -92,6 +92,7 @@ link_profile() {
   mkdir -p "$dst_dir"
   link_file "$src_dir" "$dst_dir" SOUL.md
   link_file "$src_dir" "$dst_dir" config.yaml
+  link_file "$src_dir" "$dst_dir" device-policy.yaml   # chỉ default profile có (friday: skip → không có device)
   link_skills "$src_dir" "$dst_dir"
 }
 
@@ -115,7 +116,7 @@ done
 echo
 echo "Trạng thái:"
 for base in "${LINKED_DIRS[@]}"; do
-  for p in SOUL.md config.yaml skills; do
+  for p in SOUL.md config.yaml device-policy.yaml skills; do
     [ -e "$base/$p" ] && ls -ld "$base/$p" || true
   done
 done

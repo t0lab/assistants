@@ -1,0 +1,17 @@
+# Device-control policy cho profile DEFAULT (Jarvis — bot DM owner-only).
+# Config-as-code: link-home.sh symlink file này vào ~/.hermes/device-policy.yaml.
+# KHÔNG phải secret (chỉ cờ boolean) → version-control được.
+#
+# ⚠️ MẶC ĐỊNH FULL: Jarvis toàn quyền điều khiển thiết bị (chủ ý của owner).
+#    Jarvis là bot DM owner-only (TELEGRAM_ALLOWED_USERS=owner) + đã có terminal/
+#    code_execution (vốn RCE) → full device KHÔNG nới blast-radius đáng kể.
+#    Muốn HẠN CHẾ: write_enabled: false (chỉ đọc) | allow_all_packages: false +
+#    liệt kê allowed_packages | allow_telephony: false (chặn gọi/SMS).
+#
+# Profile "friday" (group, least-privilege) KHÔNG nạp MCP device → file này không áp cho nó.
+# Thiếu file / parse lỗi → policy.py mặc định DENY toàn bộ (sàn an toàn trong code).
+
+write_enabled: true        # mọi tool ghi: tap/swipe/input_text/key/nav/open_app/open_url/kill_app/toggle/brightness/volume/lock_screen
+allow_all_packages: true   # open_app mở gói nào cũng được (bỏ qua allowed_packages)
+allow_telephony: true      # call + sms_compose (gọi/nhắn thật)
+allowed_packages: []       # chỉ dùng khi allow_all_packages: false

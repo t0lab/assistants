@@ -35,7 +35,9 @@ termux-setup-storage
 
 Đã khai báo sẵn trong `home/config.yaml > mcp_servers.device` (symlink vào `~/.hermes/`). Restart Hermes để nạp.
 
-## Tool (Pha 1 — read-only)
+## Tool
+
+**Đọc** (luôn chạy, không gate):
 
 | Tool | Việc |
 |------|------|
@@ -45,7 +47,32 @@ termux-setup-storage
 | `list_packages(third_party_only=True)` | Tên gói app đã cài |
 | `current_app()` | App/Activity foreground |
 
-Tool **write** (`tap/swipe/input_text/key/open_app/nav`) + allow-list/confirm + gõ tiếng Việt (ADBKeyBoard): **D4/D5** (đang tới).
+`device_info()` (đọc — pin/model/Android version) cũng không gate.
+
+**Ghi** (qua cổng `~/.hermes/device-policy.yaml`, mặc định **CHẶN**):
+
+| Tool | Việc |
+|------|------|
+| `tap(x,y)` | Chạm toạ độ (lấy từ `center` của dump_ui) |
+| `swipe(x1,y1,x2,y2,duration_ms=300)` | Vuốt |
+| `key(keycode)` | Phím: số hoặc tên (back/home/recent/enter/del…) |
+| `nav(back\|home\|recent)` | Điều hướng hệ thống |
+| `input_text(text)` | Gõ chữ (kể cả tiếng Việt) qua ADBKeyBoard |
+| `open_app(package)` | Mở app (chỉ gói trong `allowed_packages`) |
+| `open_url(url)` | Mở link/deeplink (https/market:/wa.me/geo:/youtube search…) |
+| `kill_app(package)` | Force-stop app |
+| `toggle(target,on)` | wifi \| bluetooth \| airplane \| data |
+| `brightness(0-255)` · `volume(up\|down\|mute)` · `lock_screen()` | Màn hình / âm lượng |
+| `call(number)` · `sms_compose(number,body)` | Gọi/SMS — **cần `allow_telephony: true`** |
+
+### Allow-list (Jarvis = full mặc định)
+
+`hermes/home/device-policy.yaml` được `link-home.sh` symlink vào `~/.hermes/device-policy.yaml` → **Jarvis (default profile) full quyền sẵn** (`write_enabled/allow_all_packages/allow_telephony: true`). Muốn hạn chế: sửa file đó (`write_enabled: false` = chỉ đọc; `allow_all_packages: false` + liệt kê `allowed_packages`; `allow_telephony: false` chặn gọi/SMS).
+
+Profile **`friday`** (group) KHÔNG khai `mcp_servers` → không nạp MCP device → file này không áp. Thiếu file / parse lỗi → `policy.py` mặc định **DENY** (sàn an toàn).
+
+### Gõ tiếng Việt
+`input_text` gõ qua **ADBKeyBoard** (`adb input text` không gõ được Unicode). Cài + set IME: xem [`../install/device/adbkeyboard.md`](../install/device/adbkeyboard.md).
 
 ## Cấu hình (env)
 
