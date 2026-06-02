@@ -44,7 +44,8 @@ termux-setup-storage
 | `check_device()` | Kiểm tra backend chạy được (`id` → uid shell) |
 | `dump_ui(only_interesting=True)` | Cây UI → element (text/desc/id/class + tâm + clickable) — **cách chính để "nhìn"** |
 | `screenshot()` | Ảnh PNG màn hình (bổ trợ / gửi user) |
-| `list_packages(third_party_only=True)` | Tên gói app đã cài |
+| `list_packages(third_party_only=True)` | Tên gói app (mặc định chỉ app bên thứ 3) |
+| `find_package(keyword)` | Tìm package theo từ khoá trong **mọi** app (kể cả cài sẵn) — dùng trước `open_app` |
 | `current_app()` | App/Activity foreground |
 
 `device_info()` (đọc — pin/model/Android version) cũng không gate.

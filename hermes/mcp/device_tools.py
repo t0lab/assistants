@@ -122,6 +122,20 @@ def list_packages(third_party_only: bool = True) -> list[str]:
     return sorted(pkgs)
 
 
+def find_package(keyword: str) -> list[str]:
+    """Tìm package theo từ khoá trong MỌI app (kể cả app cài sẵn/system). Dùng trước open_app."""
+    out, err, rc = run_shell("pm list packages")
+    if rc != 0:
+        raise ShellError(f"pm list packages fail: {(err or out).strip()}")
+    kw = keyword.strip().lower()
+    pkgs = [
+        line.split("package:", 1)[1].strip()
+        for line in out.splitlines()
+        if line.startswith("package:") and kw in line.lower()
+    ]
+    return sorted(pkgs)
+
+
 def current_app() -> dict:
     """App/Activity đang hiển thị (foreground). Trả {package, activity, raw}.
 

@@ -68,6 +68,12 @@ def list_packages(third_party_only: bool = True) -> list[str]:
 
 
 @mcp.tool()
+def find_package(keyword: str) -> list[str]:
+    """Tìm tên package theo từ khoá trong MỌI app (kể cả cài sẵn). Dùng để lấy đúng package trước open_app (vd 'youtube' → com.google.android.youtube)."""
+    return device_tools.find_package(keyword)
+
+
+@mcp.tool()
 def current_app() -> dict:
     """App/Activity đang hiển thị (foreground): {package, activity, raw}."""
     return device_tools.current_app()
