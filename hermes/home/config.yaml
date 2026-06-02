@@ -23,13 +23,22 @@ model:
 security:
   allow_lazy_installs: false
 
+# Web search backend cho toolset `web` (web_search). Endpoint = SEARXNG_URL trong .env
+# (SearXNG self-host qua NetBird — xem searxng/ + ADR search-backend-searxng.md).
+# Hermes có auto-detect (SEARXNG_URL set → tự chọn searxng) nhưng khai explicit cho chắc + config-as-code.
+# Giá trị "searxng" lấy từ source: plugins/web/searxng/provider.py (SearXNGWebSearchProvider.name).
+web:
+  search_backend: searxng
+
 # MCP servers
 mcp_servers:
   # Điều khiển thiết bị (no-root) qua Shizuku/rish — xem hermes/mcp/ + ADR device-control-via-adb.
   # Đường dẫn tuyệt đối trên phone (repo ở ~/t0lab/assistants). Cần `pip install -r hermes/mcp/requirements.txt`
   # trong venv Hermes, và Shizuku đã kích hoạt (rish chạy được). Đổi backend qua HERMES_DEVICE_BACKEND.
   device:
-    command: python3
+    # PHẢI là python tuyệt đối của venv (chứa `mcp`). Gateway do boot.sh chạy với PATH tối thiểu
+    # → `python3` trần = python hệ thống KHÔNG có mcp → server crash, agent mất tool.
+    command: /data/data/com.termux/files/home/.hermes/hermes-agent/venv/bin/python3
     args: ["/data/data/com.termux/files/home/t0lab/assistants/hermes/mcp/server.py"]
     env:
       HERMES_DEVICE_BACKEND: "rish"   # rish (Shizuku) | adb (self-ADB fallback)
