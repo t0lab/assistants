@@ -61,6 +61,13 @@ def run_shell(cmd: str, *, timeout: int | None = None) -> tuple[str, str, int]:
         raise ShellError(f"Lệnh quá {timeout or DEFAULT_TIMEOUT}s: {cmd}") from exc
     out = proc.stdout.decode("utf-8", "replace")
     err = proc.stderr.decode("utf-8", "replace")
+    # rish khi thiếu RISH_APPLICATION_ID: in cảnh báo ra stdout + exit 0 + KHÔNG chạy lệnh.
+    # Bắt loud để tool không báo "thành công giả" (vd open_app nói opened mà app chưa mở).
+    if BACKEND == "rish" and "RISH_APPLICATION_ID is not set" in out:
+        raise ShellError(
+            "rish KHÔNG chạy lệnh: thiếu RISH_APPLICATION_ID trong tiến trình MCP. "
+            "Pull code mới (shell_backend tự set) + restart gateway."
+        )
     return out, err, proc.returncode
 
 

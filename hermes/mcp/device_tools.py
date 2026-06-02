@@ -217,8 +217,10 @@ def open_app(package: str) -> str:
         f"monkey -p {package} -c android.intent.category.LAUNCHER 1"
     )
     blob = out + err
-    if rc != 0 or "No activities found" in blob or "aborted" in blob:
-        raise ShellError(f"open_app '{package}' fail: {blob.strip()}")
+    # monkey báo thành công bằng "Events injected: 1". Yêu cầu dấu hiệu DƯƠNG này để
+    # không trả "opened" giả khi lệnh thực ra không chạy (rc=0 nhưng không inject).
+    if rc != 0 or "Events injected" not in blob or "No activities found" in blob or "aborted" in blob:
+        raise ShellError(f"open_app '{package}' không mở được: {blob.strip()[:200]}")
     return f"opened {package}"
 
 
