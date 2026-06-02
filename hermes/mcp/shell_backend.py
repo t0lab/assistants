@@ -15,6 +15,13 @@ import subprocess
 BACKEND = os.environ.get("HERMES_DEVICE_BACKEND", "rish").strip().lower()
 DEFAULT_TIMEOUT = int(os.environ.get("HERMES_DEVICE_TIMEOUT", "30"))
 
+# rish CẦN env RISH_APPLICATION_ID (= app gọi nó, Termux). Gateway có thể không truyền
+# env của mcp_servers.device qua subprocess (hoặc config bị Hermes rewrite mất) → tự đặt
+# mặc định để không phụ thuộc config-env. Nếu thiếu, rish in "RISH_APPLICATION_ID is not
+# set" ra stdout + exit 0 (rc=0, không có uid=) → tưởng nhầm backend hỏng.
+if BACKEND == "rish":
+    os.environ.setdefault("RISH_APPLICATION_ID", "com.termux")
+
 
 class ShellError(RuntimeError):
     """Lỗi khi chạy lệnh qua backend (backend chưa kích hoạt, timeout, lệnh fail)."""
@@ -62,7 +69,9 @@ def check_backend() -> str:
     out, err, rc = run_shell("id")
     if rc != 0 or "uid=" not in out:
         raise ShellError(
-            f"Backend '{BACKEND}' không chạy được lệnh shell "
-            f"(rc={rc}). stderr={err.strip() or '(rỗng)'}"
+            f"Backend '{BACKEND}' không chạy được lệnh shell (rc={rc}). "
+            f"stdout={out.strip()[:200]!r} stderr={err.strip()[:200]!r}. "
+            "Nếu thấy 'RISH_APPLICATION_ID is not set' → env chưa tới rish; "
+            "nếu rỗng → Shizuku chưa Start (kích hoạt lại sau reboot)."
         )
     return out.strip()
