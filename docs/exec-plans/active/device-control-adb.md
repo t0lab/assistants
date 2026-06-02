@@ -19,7 +19,7 @@ Quyết định + lý do ở ADR [`device-control-via-adb.md`](../../design-docs
 - [ ] D1 — ADR device-control-via-adb ✅ (kèm plan này)
   - Done when: `docs/design-docs/device-control-via-adb.md` tồn tại (Context 2-lớp / Decision / Alternatives / Consequences / Revisit), link từ plan.
 
-- [ ] D2 — Quyền shell: Shizuku + `rish` trong Termux (backend chính)
+- [x] D2 — Quyền shell: Shizuku + `rish` trong Termux (backend chính) ✅ 2026-06-02 (rish `uid=2000(shell)` trên HyperOS; **auto-start sau reboot CHƯA test**)
   - Done when: cài Shizuku, kích hoạt qua Wireless debugging (không-root); copy `rish` + `rish_shizuku.dex` vào `$PREFIX/bin`, set env; `rish -c 'id'` trả về `uid=2000(shell)`; `rish -c 'uiautomator dump /sdcard/ui.xml'` chạy. Tài liệu hoá bước kích hoạt lại sau reboot + thử cửa auto-start (`WRITE_SECURE_SETTINGS`/trusted-wifi) trên HyperOS (ghi rõ có chạy hay không).
   - Verify: `rish -c 'input keyevent 26'` bật/tắt màn hình.
   - Files: `hermes/install/device/shizuku-rish.md` (runbook), `hermes/install/device/setup-rish.sh`
@@ -29,8 +29,9 @@ Quyết định + lý do ở ADR [`device-control-via-adb.md`](../../design-docs
   - Done when: runbook `pkg install android-tools` + `adb pair/connect 127.0.0.1:<port>`; abstraction `run_shell()` chọn backend qua env/config (`HERMES_DEVICE_BACKEND=rish|adb`). Chỉ làm nếu Shizuku không khả thi trên máy.
   - Files: `hermes/install/device/self-adb.md`
 
-- [ ] D3 — `hermes/mcp/` MCP server: tool read-only + abstraction backend
+- [~] D3 — `hermes/mcp/` MCP server: tool read-only + abstraction backend
   - Done when: `run_shell()` chạy lệnh qua backend (`rish`/`adb shell`); tools `screenshot()` (`screencap` → PNG), `dump_ui()` (`uiautomator dump` → JSON element/text/bounds), `list_packages()`, `current_app()`; khai báo trong `config.yaml > mcp_servers`; Hermes gọi `dump_ui` + `screenshot` ra kết quả thật. Screenshot trả ảnh để model đọc / gửi user.
+  - 🔶 2026-06-02: **perception logic verified on-device** qua `rish` (dump_ui 14 elem, screenshot 211KB PNG, list_packages 39 gói, current_app=com.termux). Fix: `current_app` parse trong Python (grep+quote vỡ qua `rish -c`). **Còn lại**: test Hermes gọi tool qua MCP (`pip install -r hermes/mcp/requirements.txt` + `boot.sh --restart` + hỏi agent).
   - Files: `hermes/mcp/server.py`, `hermes/mcp/shell_backend.py`, `hermes/mcp/device_tools.py`, `hermes/mcp/requirements.txt`, `hermes/mcp/README.md`, sửa `hermes/home/config.yaml`
 
 - [ ] D4 — Tool write + security gate (allow-list dễ cấu hình)
@@ -56,6 +57,7 @@ Quyết định + lý do ở ADR [`device-control-via-adb.md`](../../design-docs
 
 ## Decisions log
 
+- 2026-06-02: ✅ **Shizuku/rish verified on HyperOS** (Redmi Note 11S). `rish -c id` → uid=2000(shell); MCP perception (dump_ui/screenshot/list_packages/current_app) chạy thật qua backend rish. Bài học: (1) `pm path` bị Android chặn từ app-uid → bóc rish bằng GUI Shizuku ("Use Shizuku in terminal apps"); (2) lệnh nhúng quote/pipe (grep) **vỡ khi qua `rish -c`** → fetch raw + parse trong Python; (3) `RISH_APPLICATION_ID` set ở mcp_servers.env (process spawn không đọc .bashrc); (4) auto-start sau reboot vẫn là ẩn số (test sau).
 - 2026-05-30: ADB shell-privilege (no-root) thay vì chờ root cho UI control. 2 lớp: **quyền** = Shizuku+rish (pluggable, self-ADB fallback); **automation** = raw adb (Pha 1) → Portal APK (Pha 2). Perception XML + screenshot (Qwen3.6 đọc ảnh). Tiếng Việt qua ADBKeyBoard. Tool write allow-list `~/.hermes/device-policy.yaml` + confirm (agent reachable qua Telegram/web). MCP ở `hermes/mcp/`. Lý do + alternatives ở ADR.
 
 ## Blockers
