@@ -123,12 +123,28 @@ def list_packages(third_party_only: bool = True) -> list[str]:
 
 
 def current_app() -> dict:
-    """App/Activity đang hiển thị (foreground). Trả {package, activity, raw}."""
-    out, _err, _rc = run_shell(
-        "dumpsys window 2>/dev/null | grep -E 'mCurrentFocus|mFocusedApp' | head -2"
-    )
-    pkg = activity = ""
-    m = _FOCUS_RE.search(out)
-    if m:
-        pkg, activity = m.group(1), m.group(2)
-    return {"package": pkg, "activity": activity, "raw": out.strip()}
+    """App/Activity đang hiển thị (foreground). Trả {package, activity, raw}.
+
+    Lọc/parse trong Python — KHÔNG dùng grep/pipe/quote trong chuỗi lệnh (qua rish dễ vỡ).
+    """
+    pkg = activity = raw = ""
+    # Nguồn 1: dumpsys window displays → mCurrentFocus (MIUI để field này ở 'displays')
+    out, _e, _r = run_shell("dumpsys window displays")
+    for line in out.splitlines():
+        if "mCurrentFocus" in line:
+            raw = line.strip()
+            m = _FOCUS_RE.search(line)
+            if m:
+                pkg, activity = m.group(1), m.group(2)
+            break
+    # Nguồn 2 (fallback): dumpsys activity activities → ResumedActivity
+    if not pkg:
+        out2, _e, _r = run_shell("dumpsys activity activities")
+        for line in out2.splitlines():
+            if "ResumedActivity" in line:
+                raw = raw or line.strip()
+                m = _FOCUS_RE.search(line)
+                if m:
+                    pkg, activity = m.group(1), m.group(2)
+                    break
+    return {"package": pkg, "activity": activity, "raw": raw}
