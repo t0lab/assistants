@@ -43,6 +43,7 @@ mcp_servers:
     env:
       HERMES_DEVICE_BACKEND: "rish"   # rish (Shizuku) | adb (self-ADB fallback)
       RISH_APPLICATION_ID: "com.termux"  # rish cần biết app gọi (Termux); .bashrc không áp cho process spawn
+      HERMES_DEVICE_DEBUG: "1"        # TẠM: trace env+lệnh vào ~/.hermes/logs/device-debug.log (gỡ sau)
 
   # root: (phase sau, khi máy đã root) — chạy lệnh đặc quyền qua `su -c`, xem mcp-root/
   # root:

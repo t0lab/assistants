@@ -23,6 +23,35 @@ DEFAULT_TIMEOUT = int(os.environ.get("HERMES_DEVICE_TIMEOUT", "30"))
 if BACKEND == "rish":
     os.environ.setdefault("RISH_APPLICATION_ID", "com.termux")
 
+# Debug trace (bật bằng HERMES_DEVICE_DEBUG=1 trong mcp_servers.device.env) → ghi env lúc
+# import + mỗi lần run_shell vào ~/.hermes/logs/device-debug.log. Để soi vì sao tiến trình
+# do gateway spawn (env tối thiểu) lệch với shell interactive.
+_DEBUG = os.environ.get("HERMES_DEVICE_DEBUG", "").strip() not in ("", "0", "false", "False")
+_DEBUG_LOG = os.path.expanduser("~/.hermes/logs/device-debug.log")
+
+
+def _dbg(msg: str) -> None:
+    if not _DEBUG:
+        return
+    try:
+        os.makedirs(os.path.dirname(_DEBUG_LOG), exist_ok=True)
+        with open(_DEBUG_LOG, "a") as fh:
+            fh.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
+    except Exception:
+        pass
+
+
+if _DEBUG:
+    _envsnap = {
+        k: os.environ.get(k)
+        for k in (
+            "PATH", "HOME", "RISH_APPLICATION_ID", "ANDROID_ROOT", "ANDROID_DATA",
+            "ANDROID_ART_ROOT", "ANDROID_I18N_ROOT", "ANDROID_TZDATA_ROOT",
+            "TMPDIR", "LD_LIBRARY_PATH", "BOOTCLASSPATH",
+        )
+    }
+    _dbg(f"=== import: BACKEND={BACKEND} pid={os.getpid()} env={_envsnap}")
+
 
 class ShellError(RuntimeError):
     """Lỗi khi chạy lệnh qua backend (backend chưa kích hoạt, timeout, lệnh fail)."""
@@ -77,6 +106,10 @@ def run_shell(cmd: str, *, timeout: int | None = None) -> tuple[str, str, int]:
             raise ShellError(f"Lệnh quá {timeout or DEFAULT_TIMEOUT}s: {cmd}") from exc
         out = proc.stdout.decode("utf-8", "replace")
         err = ""  # đã gộp vào out
+        _dbg(
+            f"[run] cmd={cmd[:80]!r} rc_raw={proc.returncode} len={len(out)} "
+            f"marker={'Y' if _MARK in out else 'N'} head={out[:200]!r}"
+        )
         # rish thiếu RISH_APPLICATION_ID: in cảnh báo + exit 0 + KHÔNG chạy lệnh → bắt loud.
         if BACKEND == "rish" and "RISH_APPLICATION_ID is not set" in out:
             raise ShellError(
