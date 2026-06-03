@@ -43,6 +43,14 @@ export RISH_APPLICATION_ID=com.termux
 echo "  (Lưu ý: MCP server đọc RISH_APPLICATION_ID từ config.yaml > mcp_servers.device.env,"
 echo "   không phụ thuộc .bashrc — đã set sẵn ở đó.)"
 
+# 3b) Capture env Android runtime cho tiến trình GATEWAY.
+# Tiến trình do Termux:Boot (app com.termux.boot) spawn THIẾU BOOTCLASSPATH/ANDROID_*
+# (app com.termux interactive thì có) → rish trả rỗng câm. Script này chạy từ interactive
+# nên có sẵn → lưu lại để shell_backend nạp cho gateway. Chạy lại sau OS update.
+mkdir -p "$HOME/.hermes"
+env | grep -E '^(ANDROID|BOOTCLASSPATH|DEX2OATBOOTCLASSPATH)=' > "$HOME/.hermes/android-env"
+echo "→ Capture android-env: $(wc -l < "$HOME/.hermes/android-env") biến → ~/.hermes/android-env"
+
 # 4) Test
 echo "→ Test: rish -c 'id'"
 if out=$(rish -c 'id' 2>&1); then

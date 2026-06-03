@@ -35,6 +35,15 @@ rish -c 'input keyevent 26'           # bật/tắt màn hình → thấy có t�
 ```
 `uid=2000(shell)` ⇒ backend `rish` dùng được. MCP `hermes/mcp/` sẽ chạy lệnh qua đây.
 
+## Env Android cho gateway (BẮT BUỘC để tool device chạy qua bot)
+
+Tiến trình MCP do **gateway/Termux:Boot** (app `com.termux.boot`) spawn **thiếu** env Android runtime (`BOOTCLASSPATH`, `ANDROID_ROOT/DATA/ART_ROOT…`) mà shell interactive (app `com.termux`) có → `rish`→`app_process` không khởi động được ART VM → **trả rỗng câm** (mọi tool device "truncation"). `setup-rish.sh` đã tự **capture** các biến này vào `~/.hermes/android-env` (shell_backend nạp lúc chạy). Nếu chưa có, chạy tay **từ Termux interactive**:
+
+```bash
+env | grep -E '^(ANDROID|BOOTCLASSPATH|DEX2OATBOOTCLASSPATH)=' > ~/.hermes/android-env
+```
+Chạy lại sau mỗi **OS update** (BOOTCLASSPATH đổi). Path tĩnh (`ANDROID_ROOT=/system`…) thì shell_backend tự hardcode.
+
 ## Auto-start sau reboot (thử — HyperOS hay chặn)
 Không-root thì phải kích hoạt lại mỗi boot. Các cửa (test xem máy có cho không):
 - **Shizuku tự cấp `WRITE_SECURE_SETTINGS`** → tự bật Wireless ADB + tự start khi vào Wi-Fi tin cậy (Android 11+). Trên MIUI/HyperOS thường bị chặn.

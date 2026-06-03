@@ -20,8 +20,40 @@ DEFAULT_TIMEOUT = int(os.environ.get("HERMES_DEVICE_TIMEOUT", "30"))
 # env của mcp_servers.device qua subprocess (hoặc config bị Hermes rewrite mất) → tự đặt
 # mặc định để không phụ thuộc config-env. Nếu thiếu, rish in "RISH_APPLICATION_ID is not
 # set" ra stdout + exit 0 (rc=0, không có uid=) → tưởng nhầm backend hỏng.
+# Env Android runtime mà rish/app_process CẦN. Tiến trình do Termux:Boot (app
+# com.termux.boot) spawn THIẾU chúng (app com.termux interactive thì có) → không có
+# BOOTCLASSPATH thì app_process không khởi động được ART VM → rish trả RỖNG câm.
+_STATIC_ANDROID_ENV = {
+    "ANDROID_ROOT": "/system",
+    "ANDROID_DATA": "/data",
+    "ANDROID_ART_ROOT": "/apex/com.android.art",
+    "ANDROID_I18N_ROOT": "/apex/com.android.i18n",
+    "ANDROID_TZDATA_ROOT": "/apex/com.android.tzdata",
+}
+
+
+def _ensure_android_env() -> None:
+    for k, v in _STATIC_ANDROID_ENV.items():
+        os.environ.setdefault(k, v)
+    if "/system/bin" not in os.environ.get("PATH", "").split(":"):
+        os.environ["PATH"] = os.environ.get("PATH", "") + ":/system/bin"
+    # BOOTCLASSPATH/DEX2OATBOOTCLASSPATH: động, theo máy/OS → nạp từ file đã capture từ shell
+    # interactive (xem install/device/shizuku-rish.md). KHÔNG hardcode (đổi theo OS update).
+    captured = os.path.expanduser("~/.hermes/android-env")
+    try:
+        with open(captured) as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, val = line.partition("=")
+                    os.environ.setdefault(key.strip(), val.strip())
+    except FileNotFoundError:
+        pass
+
+
 if BACKEND == "rish":
     os.environ.setdefault("RISH_APPLICATION_ID", "com.termux")
+    _ensure_android_env()
 
 # Debug trace (bật bằng HERMES_DEVICE_DEBUG=1 trong mcp_servers.device.env) → ghi env lúc
 # import + mỗi lần run_shell vào ~/.hermes/logs/device-debug.log. Để soi vì sao tiến trình
