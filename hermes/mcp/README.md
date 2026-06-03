@@ -84,6 +84,16 @@ Profile **`friday`** (group) KHÔNG khai `mcp_servers` → không nạp MCP devi
 | `HERMES_DEVICE_SDCARD_REMOTE` | `/sdcard` | Nơi shell ghi file trung gian |
 | `HERMES_DEVICE_SDCARD_LOCAL` | _(tự dò)_ | Đường Termux đọc /sdcard (`/storage/emulated/0`) |
 
+## Gỡ rối rish (đã trả giá — đừng đào lại)
+
+`run_shell` xử sẵn 3 quirk của rish/Shizuku; nếu refactor đừng bỏ:
+
+1. **`RISH_APPLICATION_ID` không truyền qua process spawn** → rish in "RISH_APPLICATION_ID is not set" ra stdout + exit 0 + KHÔNG chạy lệnh. `shell_backend` tự `setdefault("com.termux")`; run_shell bắt sentinel này → raise (tránh "thành công giả").
+2. **rish đẩy output sang STDERR thất thường** (cùng lệnh, lúc stdout lúc stderr — đã quan sát trực tiếp). → chạy subprocess với `stderr=STDOUT` (gộp). Đây là gốc của mọi flaky `pm list`/`find_package`/`open_app` trước đây.
+3. **Output có thể bị cụt đuôi** khi capture. → bọc `<cmd>; printf '\n<MARK><rc>\n'`; thiếu marker = cụt → retry 3×; marker cũng để khôi phục đúng exit code.
+
+Hệ quả: tool ĐỌC tự cứu/loud, không trả rỗng giả. `find_package` lọc substring trên máy (`pm list packages <kw>`) cho output nhỏ. Verified on-device 2026-06-03: find_package 8/8 ổn định.
+
 ## Bảo mật
 
 Agent reachable qua Telegram + web → device-control = **blast radius lớn**. Pha 1 chỉ read-only; D4 thêm allow-list (`~/.hermes/device-policy.yaml`) + confirm cho tool write, mặc định **deny**. Giữ Cloudflare Access + `TELEGRAM_ALLOWED_USERS`. Backend chỉ phục vụ localhost.

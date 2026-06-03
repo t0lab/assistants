@@ -29,12 +29,12 @@ Quyết định + lý do ở ADR [`device-control-via-adb.md`](../../design-docs
   - Done when: runbook `pkg install android-tools` + `adb pair/connect 127.0.0.1:<port>`; abstraction `run_shell()` chọn backend qua env/config (`HERMES_DEVICE_BACKEND=rish|adb`). Chỉ làm nếu Shizuku không khả thi trên máy.
   - Files: `hermes/install/device/self-adb.md`
 
-- [~] D3 — `hermes/mcp/` MCP server: tool read-only + abstraction backend
+- [x] D3 — `hermes/mcp/` MCP server: tool read-only + abstraction backend ✅ 2026-06-03 (verified on-device)
   - Done when: `run_shell()` chạy lệnh qua backend (`rish`/`adb shell`); tools `screenshot()` (`screencap` → PNG), `dump_ui()` (`uiautomator dump` → JSON element/text/bounds), `list_packages()`, `current_app()`; khai báo trong `config.yaml > mcp_servers`; Hermes gọi `dump_ui` + `screenshot` ra kết quả thật. Screenshot trả ảnh để model đọc / gửi user.
   - 🔶 2026-06-02: **perception logic verified on-device** qua `rish` (dump_ui 14 elem, screenshot 211KB PNG, list_packages 39 gói, current_app=com.termux). Fix: `current_app` parse trong Python (grep+quote vỡ qua `rish -c`). **Còn lại**: test Hermes gọi tool qua MCP (`pip install -r hermes/mcp/requirements.txt` + `boot.sh --restart` + hỏi agent).
   - Files: `hermes/mcp/server.py`, `hermes/mcp/shell_backend.py`, `hermes/mcp/device_tools.py`, `hermes/mcp/requirements.txt`, `hermes/mcp/README.md`, sửa `hermes/home/config.yaml`
 
-- [~] D4 — Tool write + security gate (allow-list dễ cấu hình) — code done + verified offline (policy deny/allow); on-device pending
+- [x] D4 — Tool write + security gate (allow-list dễ cấu hình) ✅ 2026-06-03 (verified on-device: open_app/policy)
   - Done when: `tap(x,y)`, `swipe`, `input_text`, `key(keycode)`, `open_app(pkg)`, `nav(back|home|recent)`; mọi tool write qua **allow-list + confirm**, mặc định **deny**; allow-list ở **`~/.hermes/device-policy.yaml`** user tự sửa (package whitelist, bật/tắt confirm, cờ read-only-mode); thao tác ngoài allow-list bị từ chối + log; mở được 1 app qua Hermes; thao tác ghi bị chặn nếu chưa cho phép.
   - Files: `hermes/mcp/device_tools.py`, `hermes/mcp/policy.py`, `hermes/home/device-policy.example.yaml`, `hermes/mcp/README.md`
   - ⚠️ Security: agent reachable qua Telegram/web → bắt buộc, không tuỳ chọn.
@@ -43,7 +43,7 @@ Quyết định + lý do ở ADR [`device-control-via-adb.md`](../../design-docs
   - Done when: cài ADBKeyBoard APK, `ime set com.android.adbkeyboard/.AdbIME`; `input_text()` gửi broadcast `ADB_INPUT_B64` (base64) cho mọi chuỗi (kể cả tiếng Việt); gõ được 1 câu có dấu vào 1 ô text; runbook khôi phục IME mặc định.
   - Files: `hermes/mcp/device_tools.py`, `hermes/install/device/adbkeyboard.md`
 
-- [~] D9 — Full device control: batch tool còn thiếu (đối chiếu CloudBot/OpenClaw-NoRoot) — code done, on-device pending
+- [x] D9 — Full device control: batch tool còn thiếu (đối chiếu CloudBot/OpenClaw-NoRoot) ✅ 2026-06-03
   - Done when: thêm `open_url` (VIEW intent → cũng phủ youtube/playstore/whatsapp/maps/dialer), `kill_app`, `toggle` (wifi/bluetooth/airplane/data), `brightness`, `volume`, `lock_screen`, `device_info` (model/Android/pin), `call`+`sms_compose` (gated thêm `allow_telephony`); tất cả tool write qua policy; dynamic value bọc `shlex.quote` (an toàn `& ? space` + Unicode qua `rish -c`). Tổng 20 MCP tool.
   - Verify offline: py_compile + policy (write/telephony/pkg) + command-build ✅. On-device: gọi qua agent.
   - Files: `hermes/mcp/device_tools.py`, `hermes/mcp/server.py`, `hermes/mcp/policy.py`, `hermes/home/device-policy.example.yaml`, `hermes/mcp/README.md`
@@ -62,6 +62,8 @@ Quyết định + lý do ở ADR [`device-control-via-adb.md`](../../design-docs
   - Files: `CLAUDE.md`, `.claude/memory/project/platform-architecture.md`, `docs/design-docs/root-via-mcp.md`, `docs/exec-plans/active/hermes-pivot.md`
 
 ## Decisions log
+
+- 2026-06-03: ✅ **On-device verified** — `open_app` mở app thật, `find_package` ổn định 8/8 sau khi trị 3 quirk rish/Shizuku trong `run_shell` (xem hermes/mcp/README "Gỡ rối rish"): (1) tự set `RISH_APPLICATION_ID`; (2) **gộp stderr→stdout** (rish đẩy output sang stderr thất thường — gốc của mọi flaky `pm list`/find_package/open_app); (3) marker chống cụt + khôi phục exit code. Agent layer: SOUL buộc dùng tool device, mở app thẳng `open_app`, không phán "chưa cài" từ find_package. Jarvis full (device-policy symlink) / Friday không nạp device.
 
 - 2026-06-02: **Full device control** (D4/D5/D9) — đối chiếu repo CloudBot-Termux & Openclaw-Termux-NoRoot: cùng cơ chế (rish/adb shell + am/svc/settings/cmd/input), nên thêm toàn bộ tool họ có (open_url/kill_app/toggle/brightness/volume/device_info/call/sms) trên `run_shell`. Khác biệt: mình gate bằng allow-list + `allow_telephony` (họ không gate gì), có `dump_ui` (họ không), gõ tiếng Việt qua ADBKeyBoard (họ `input text` không Unicode). Dynamic value qua `shlex.quote`.
 - 2026-06-02: ✅ **Shizuku/rish verified on HyperOS** (Redmi Note 11S). `rish -c id` → uid=2000(shell); MCP perception (dump_ui/screenshot/list_packages/current_app) chạy thật qua backend rish. Bài học: (1) `pm path` bị Android chặn từ app-uid → bóc rish bằng GUI Shizuku ("Use Shizuku in terminal apps"); (2) lệnh nhúng quote/pipe (grep) **vỡ khi qua `rish -c`** → fetch raw + parse trong Python; (3) `RISH_APPLICATION_ID` set ở mcp_servers.env (process spawn không đọc .bashrc); (4) auto-start sau reboot vẫn là ẩn số (test sau).
