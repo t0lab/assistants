@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+import time
 
 BACKEND = os.environ.get("HERMES_DEVICE_BACKEND", "rish").strip().lower()
 DEFAULT_TIMEOUT = int(os.environ.get("HERMES_DEVICE_TIMEOUT", "30"))
@@ -39,36 +40,55 @@ def _build_argv(cmd: str) -> list[str]:
     )
 
 
+# Marker chống CỤT output: subprocess capture stdout của rish đôi khi mất đuôi với output
+# lớn (interactive `| wc -l` luôn đủ, nhưng python lúc đủ lúc thiếu). Bọc lệnh thành
+# `<cmd>; printf '\n<MARK><rc>\n'` — marker mất = output bị cụt → retry; đồng thời khôi
+# phục đúng exit code của <cmd> (vì rc của wrapper là rc của printf).
+_MARK = "__RSH_e7a1c9__"
+
+
 def run_shell(cmd: str, *, timeout: int | None = None) -> tuple[str, str, int]:
     """Chạy chuỗi shell `cmd` ở UID shell. Trả (stdout, stderr, returncode) dạng text.
 
-    Dùng cho lệnh sinh text (uiautomator dump, pm list, dumpsys, input...).
-    Lệnh ghi file nhị phân (screencap) → ghi ra /sdcard rồi đọc bằng read_remote().
+    Có chống-cụt (marker + retry) → output luôn hoàn chỉnh hoặc raise. Dùng cho lệnh sinh
+    text (uiautomator dump, pm list, dumpsys, input, monkey...). Lệnh ghi nhị phân
+    (screencap) → ghi ra /sdcard rồi đọc bằng read_remote().
     """
-    argv = _build_argv(cmd)
-    try:
-        proc = subprocess.run(
-            argv,
-            capture_output=True,
-            timeout=timeout or DEFAULT_TIMEOUT,
-        )
-    except FileNotFoundError as exc:
-        raise ShellError(
-            f"Không tìm thấy backend '{BACKEND}' ({argv[0]}). "
-            f"Đã cài/kích hoạt chưa? (Shizuku→rish hoặc adb connect). Chi tiết: {exc}"
-        ) from exc
-    except subprocess.TimeoutExpired as exc:
-        raise ShellError(f"Lệnh quá {timeout or DEFAULT_TIMEOUT}s: {cmd}") from exc
-    out = proc.stdout.decode("utf-8", "replace")
-    err = proc.stderr.decode("utf-8", "replace")
-    # rish khi thiếu RISH_APPLICATION_ID: in cảnh báo ra stdout + exit 0 + KHÔNG chạy lệnh.
-    # Bắt loud để tool không báo "thành công giả" (vd open_app nói opened mà app chưa mở).
-    if BACKEND == "rish" and "RISH_APPLICATION_ID is not set" in out:
-        raise ShellError(
-            "rish KHÔNG chạy lệnh: thiếu RISH_APPLICATION_ID trong tiến trình MCP. "
-            "Pull code mới (shell_backend tự set) + restart gateway."
-        )
-    return out, err, proc.returncode
+    wrapped = f"{cmd}; printf '\\n{_MARK}%s\\n' \"$?\""
+    argv = _build_argv(wrapped)
+    err = ""
+    for _ in range(3):
+        try:
+            proc = subprocess.run(
+                argv, capture_output=True, timeout=timeout or DEFAULT_TIMEOUT
+            )
+        except FileNotFoundError as exc:
+            raise ShellError(
+                f"Không tìm thấy backend '{BACKEND}' ({argv[0]}). "
+                f"Đã cài/kích hoạt chưa? (Shizuku→rish hoặc adb connect). Chi tiết: {exc}"
+            ) from exc
+        except subprocess.TimeoutExpired as exc:
+            raise ShellError(f"Lệnh quá {timeout or DEFAULT_TIMEOUT}s: {cmd}") from exc
+        out = proc.stdout.decode("utf-8", "replace")
+        err = proc.stderr.decode("utf-8", "replace")
+        # rish thiếu RISH_APPLICATION_ID: in cảnh báo + exit 0 + KHÔNG chạy lệnh → bắt loud.
+        if BACKEND == "rish" and "RISH_APPLICATION_ID is not set" in out:
+            raise ShellError(
+                "rish KHÔNG chạy lệnh: thiếu RISH_APPLICATION_ID trong tiến trình MCP. "
+                "Pull code mới (shell_backend tự set) + restart gateway."
+            )
+        idx = out.rfind(_MARK)
+        if idx != -1:                                    # output hoàn chỉnh (có marker)
+            tail = out[idx + len(_MARK):].strip()
+            try:
+                rc = int(tail.split()[0]) if tail else proc.returncode
+            except ValueError:
+                rc = proc.returncode
+            return out[:idx].rstrip("\n"), err, rc
+        time.sleep(0.2)                                  # mất marker = cụt → thử lại
+    raise ShellError(
+        f"Output bị cụt sau 3 lần (rish/subprocess truncation): cmd={cmd[:80]!r}"
+    )
 
 
 def check_backend() -> str:

@@ -10,7 +10,6 @@ import base64
 import os
 import re
 import shlex
-import time
 import xml.etree.ElementTree as ET
 
 from shell_backend import ShellError, run_shell
@@ -109,42 +108,36 @@ def screenshot() -> bytes:
     return _read_remote(_SHOT_REMOTE, binary=True)
 
 
-def _pm_list(flag: str = "") -> str:
-    """`pm list packages[flag]` với retry — rish/Shizuku thỉnh thoảng trả RỖNG (transient).
-    Trả output khi có 'package:'; raise sau 3 lần rỗng (loud — KHÔNG trả rỗng giả → tránh
-    agent kết luận sai 'app chưa cài')."""
-    cmd = f"pm list packages{flag}"
-    last = ""
-    for _ in range(3):
-        out, err, rc = run_shell(cmd)
-        if rc == 0 and "package:" in out:
-            return out
-        last = err.strip() or "(stdout rỗng)"
-        time.sleep(0.3)
-    raise ShellError(f"'{cmd}' trả rỗng sau 3 lần (rish transient?). err={last}")
+def _pm_list(*, filter_kw: str = "", third_party: bool = False) -> str:
+    """`pm list packages` (lọc substring TRÊN MÁY nếu có filter_kw → output nhỏ).
+    run_shell đã chống-cụt nên không cần sentinel riêng."""
+    parts = ["pm", "list", "packages"]
+    if third_party:
+        parts.append("-3")
+    if filter_kw:
+        parts.append(shlex.quote(filter_kw))   # pm lọc substring NGAY trên device
+    out, err, rc = run_shell(" ".join(parts))
+    if rc != 0:
+        raise ShellError(f"pm list packages fail (rc={rc}): {err.strip()[:120]}")
+    return out
+
+
+def _parse_pkgs(out: str) -> list[str]:
+    return sorted(
+        line.split("package:", 1)[1].strip()
+        for line in out.splitlines()
+        if line.startswith("package:")
+    )
 
 
 def list_packages(third_party_only: bool = True) -> list[str]:
     """Liệt kê package đã cài (mặc định chỉ app bên thứ 3). Tìm app theo tên: dùng find_package."""
-    out = _pm_list(" -3" if third_party_only else "")
-    pkgs = [
-        line.split("package:", 1)[1].strip()
-        for line in out.splitlines()
-        if line.startswith("package:")
-    ]
-    return sorted(pkgs)
+    return _parse_pkgs(_pm_list(third_party=third_party_only))
 
 
 def find_package(keyword: str) -> list[str]:
     """Tìm package theo từ khoá trong MỌI app (kể cả app cài sẵn/system). Dùng trước open_app."""
-    out = _pm_list("")
-    kw = keyword.strip().lower()
-    pkgs = [
-        line.split("package:", 1)[1].strip()
-        for line in out.splitlines()
-        if line.startswith("package:") and kw in line.lower()
-    ]
-    return sorted(pkgs)
+    return _parse_pkgs(_pm_list(filter_kw=keyword))
 
 
 def current_app() -> dict:
