@@ -116,9 +116,9 @@ def _pm_list(*, filter_kw: str = "", third_party: bool = False) -> str:
         parts.append("-3")
     if filter_kw:
         parts.append(shlex.quote(filter_kw))   # pm lọc substring NGAY trên device
-    out, err, rc = run_shell(" ".join(parts))
+    out, _err, rc = run_shell(" ".join(parts))
     if rc != 0:
-        raise ShellError(f"pm list packages fail (rc={rc}): {err.strip()[:120]}")
+        raise ShellError(f"pm list packages fail (rc={rc}): {out.strip()[:120]}")
     return out
 
 

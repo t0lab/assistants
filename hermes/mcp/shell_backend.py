@@ -59,8 +59,14 @@ def run_shell(cmd: str, *, timeout: int | None = None) -> tuple[str, str, int]:
     err = ""
     for _ in range(3):
         try:
+            # GỘP stderr→stdout: rish (Shizuku) đôi khi đẩy output của lệnh sang stderr thay
+            # vì stdout (đã quan sát: cùng lệnh, lúc ra stdout lúc ra stderr). Gộp lại để parse
+            # ổn định bất kể rish bỏ vào luồng nào.
             proc = subprocess.run(
-                argv, capture_output=True, timeout=timeout or DEFAULT_TIMEOUT
+                argv,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                timeout=timeout or DEFAULT_TIMEOUT,
             )
         except FileNotFoundError as exc:
             raise ShellError(
@@ -70,7 +76,7 @@ def run_shell(cmd: str, *, timeout: int | None = None) -> tuple[str, str, int]:
         except subprocess.TimeoutExpired as exc:
             raise ShellError(f"Lệnh quá {timeout or DEFAULT_TIMEOUT}s: {cmd}") from exc
         out = proc.stdout.decode("utf-8", "replace")
-        err = proc.stderr.decode("utf-8", "replace")
+        err = ""  # đã gộp vào out
         # rish thiếu RISH_APPLICATION_ID: in cảnh báo + exit 0 + KHÔNG chạy lệnh → bắt loud.
         if BACKEND == "rish" and "RISH_APPLICATION_ID is not set" in out:
             raise ShellError(
