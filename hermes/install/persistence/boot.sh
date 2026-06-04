@@ -30,15 +30,33 @@ export PATH
 HERMES="$HOME/.hermes/hermes-agent/venv/bin/hermes"
 [ -x "$HERMES" ] || HERMES="$(command -v hermes 2>/dev/null)"
 
+# Dashboard --tui (và vài tool) spawn tiến trình con `hermes` bằng TÊN TRẦN → cần `hermes`
+# trên PATH, nếu không child chết ("nohup: failed to run command 'hermes'") → dashboard không
+# bind 9119 → cloudflared 502. Môi trường boot chỉ có Termux bin → prepend thư mục chứa HERMES.
+_HDIR="$(dirname "$HERMES" 2>/dev/null)"
+[ -n "$_HDIR" ] && [ -d "$_HDIR" ] && PATH="$_HDIR:$PATH" && export PATH
+
 ENV_FILE="$HOME/.hermes/.env"
 LOG_DIR="$HOME/.hermes/logs"
 mkdir -p "$LOG_DIR"
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_DIR/boot.log"; }
 log "boot.sh start (${1:-boot})"
 
+# wait_gone <pgrep-pattern> — chờ tiến trình khớp pattern chết HẲN (tối đa ~15s), rồi SIGKILL nếu lì.
+wait_gone() {
+  _p="$1"; _n=0
+  while pgrep -f "$_p" >/dev/null 2>&1; do
+    _n=$((_n + 1))
+    if [ "$_n" -ge 15 ]; then
+      log "wait_gone: '$_p' lì sau 15s → SIGKILL"; pkill -9 -f "$_p" 2>/dev/null; sleep 1; break
+    fi
+    sleep 1
+  done
+}
+
 # --restart: kill service do script quản (KHÔNG đụng sshd — tránh rớt phiên SSH), rồi start lại sạch.
 if [ "${1:-}" = "--restart" ] || [ "${1:-}" = "restart" ]; then
-  log "restart: killing gateway(s)/dashboard/cloudflared"
+  log "restart: killing gateway(s)/dashboard/cloudflared (chờ chết hẳn rồi mới start)"
   pkill -f 'hermes gateway'   2>/dev/null              # default profile
   for _pdir in "$HOME/.hermes/profiles"/*/; do         # named profiles (hermes -p <name> gateway)
     [ -d "$_pdir" ] && pkill -f "hermes -p $(basename "$_pdir") gateway" 2>/dev/null
@@ -46,7 +64,14 @@ if [ "${1:-}" = "--restart" ] || [ "${1:-}" = "restart" ]; then
   pkill -f 'hermes dashboard' 2>/dev/null
   pkill -x cloudflared        2>/dev/null
   command -v fuser >/dev/null 2>&1 && fuser -k 9119/tcp 2>/dev/null
-  sleep 2
+  # Gateway shutdown graceful mất ~5s (drain + telegram disconnect). PHẢI chờ chết hẳn — nếu chỉ
+  # `sleep 2` thì start_bg thấy tiến trình đang chết qua pgrep, tưởng "already running" → bỏ qua
+  # start lại → gateway biến mất luôn (bug cũ: Jarvis không lên lại sau --restart).
+  wait_gone 'hermes gateway'
+  for _pdir in "$HOME/.hermes/profiles"/*/; do
+    [ -d "$_pdir" ] && wait_gone "hermes -p $(basename "$_pdir") gateway"
+  done
+  wait_gone 'hermes dashboard'
 fi
 
 # start_bg <pgrep-pattern> <logfile> <cmd...> — chạy nền nếu chưa chạy; xác nhận sống thật sau 2s
