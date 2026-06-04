@@ -1,0 +1,180 @@
+# tz-web-backends — web search (SearXNG) + extract (Firecrawl) cho Hermes, public qua Cloudflare Tunnel.
+# Deploy: clone repo lên VM → cd tz-web-backends → điền .env + sinh settings.yml/.htpasswd/creds →
+#   docker network create tz-edge   (1 lần)
+#   docker compose up -d
+# Kiến trúc + bảo mật: ../docs/design-docs/web-backends-public-vm.md  ·  Setup chi tiết: README.md
+#
+# QUY TẮC TÊN: chỉ container `tz-*` lên mạng CHUNG `tz-edge` (tránh đụng service khác trên VM).
+# Service nội bộ Firecrawl (redis/rabbitmq/nuq-postgres/playwright-service) + valkey nằm trên mạng
+# PRIVATE (backend / searxng-net) → tên generic của chúng vô hại, KHÔNG lộ ra tz-edge.
+#
+# Cổng vào DUY NHẤT = tz-cloudflared (outbound tunnel). KHÔNG service nào publish port ra host.
+
+x-firecrawl-env: &firecrawl-env          # nguyên gốc Firecrawl (apps/api). Default host khớp service key.
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+  REDIS_RATE_LIMIT_URL: ${REDIS_URL:-redis://redis:6379}
+  PLAYWRIGHT_MICROSERVICE_URL: ${PLAYWRIGHT_MICROSERVICE_URL:-http://playwright-service:3000/scrape}
+  POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+  POSTGRES_DB: ${POSTGRES_DB:-postgres}
+  POSTGRES_HOST: ${POSTGRES_HOST:-nuq-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  USE_DB_AUTHENTICATION: ${USE_DB_AUTHENTICATION:-false}   # self-host: API KHÔNG check key → auth ở tz-nginx
+  NUM_WORKERS_PER_QUEUE: ${NUM_WORKERS_PER_QUEUE:-8}
+  CRAWL_CONCURRENT_REQUESTS: ${CRAWL_CONCURRENT_REQUESTS:-10}
+  MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS:-5}
+  BROWSER_POOL_SIZE: ${BROWSER_POOL_SIZE:-5}
+  BULL_AUTH_KEY: ${BULL_AUTH_KEY}
+  LOGGING_LEVEL: ${LOGGING_LEVEL:-info}
+  # (tuỳ chọn) LLM cho /v1/extract — bỏ trống nếu chỉ dùng scrape/markdown:
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+  MODEL_NAME: ${MODEL_NAME:-}
+  # (tuỳ chọn) để Firecrawl /v1/search tự dùng SearXNG của ta (Hermes KHÔNG cần — nó gọi SearXNG trực tiếp):
+  SEARXNG_ENDPOINT: ${SEARXNG_ENDPOINT:-}
+
+services:
+  # ── Cloudflare Tunnel: đường vào DUY NHẤT (token mode — ingress cấu hình trên dashboard CF) ──
+  # Dashboard → Zero Trust → Tunnels: Public Hostname `search.timezlab.org` & `crawl.timezlab.org`
+  #   → Service = http://tz-nginx:80  (cloudflared ở net tz-edge nên resolve được tz-nginx). Xem README.
+  tz-cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: tz-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}   # token tunnel (Zero Trust → Tunnels) — KHÔNG lộ trong argv
+    networks: [tz-edge]
+    depends_on: [tz-nginx]
+    logging: { driver: json-file, options: { max-size: "5m", max-file: "3" } }
+
+  # ── nginx: reverse proxy + auth (cổng auth duy nhất), route theo Host. KHÔNG publish port. ──
+  tz-nginx:
+    image: nginx:alpine
+    container_name: tz-nginx
+    restart: unless-stopped
+    expose: ["80"]                              # chỉ trong tz-edge — KHÔNG `ports:` ra host
+    environment:
+      FIRECRAWL_BEARER: ${FIRECRAWL_BEARER}     # nginx envsubst thay vào web.conf.template lúc start
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro   # *.template → /etc/nginx/conf.d/*.conf (envsubst)
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro    # Basic auth cho search.* (gitignore)
+    networks: [tz-edge]
+    depends_on: [tz-searxng, tz-firecrawl-api]
+    logging: { driver: json-file, options: { max-size: "5m", max-file: "3" } }
+
+  # ── SearXNG (search backend) ────────────────────────────────────────────────────────────
+  tz-searxng:
+    image: searxng/searxng:latest
+    container_name: tz-searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:rw   # live (có secret_key) — gitignore
+    environment:
+      SEARXNG_BASE_URL: https://search.timezlab.org/
+    networks: [tz-edge, searxng-net]            # tz-edge: nginx gọi `tz-searxng`; searxng-net: tới valkey
+    depends_on: [searxng-valkey]
+    logging: { driver: json-file, options: { max-size: "1m", max-file: "3" } }
+
+  searxng-valkey:                               # tên generic OK: chỉ ở mạng private searxng-net
+    image: valkey/valkey:8-alpine
+    container_name: tz-searxng-valkey
+    restart: unless-stopped
+    command: valkey-server --save 30 1 --loglevel warning
+    volumes:
+      - searxng-valkey-data:/data
+    networks: [searxng-net]
+    logging: { driver: json-file, options: { max-size: "1m", max-file: "3" } }
+
+  # ── Firecrawl self-host (extract backend) — image-based (ghcr), KHÔNG build từ source ─────
+  # api lên CẢ tz-edge (để tz-nginx gọi `tz-firecrawl-api`) lẫn backend (tới redis/rabbitmq/pg/playwright).
+  tz-firecrawl-api:
+    image: ghcr.io/firecrawl/firecrawl:latest
+    container_name: tz-firecrawl-api
+    restart: unless-stopped
+    command: node dist/src/harness.js --start-docker
+    environment:
+      <<: *firecrawl-env
+      HOST: "0.0.0.0"
+      PORT: ${INTERNAL_PORT:-3002}
+      EXTRACT_WORKER_PORT: ${EXTRACT_WORKER_PORT:-3004}
+      WORKER_PORT: ${WORKER_PORT:-3005}
+      NUQ_RABBITMQ_URL: amqp://rabbitmq:5672    # `rabbitmq` resolve trên backend net
+      HARNESS_STARTUP_TIMEOUT_MS: ${HARNESS_STARTUP_TIMEOUT_MS:-60000}
+      ENV: local
+    ulimits:
+      nofile: { soft: 65535, hard: 65535 }
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      redis: { condition: service_started }
+      playwright-service: { condition: service_started }
+      rabbitmq: { condition: service_healthy }
+      nuq-postgres: { condition: service_started }
+    networks: [backend, tz-edge]               # KHÔNG `ports:` — chỉ tz-nginx gọi qua tz-edge
+    cpus: 4.0
+    mem_limit: 8G
+    memswap_limit: 8G
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+
+  playwright-service:                            # tên generic OK: chỉ ở backend net (private)
+    image: ghcr.io/firecrawl/playwright-service:latest
+    container_name: tz-firecrawl-playwright
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      ALLOW_LOCAL_WEBHOOKS: ${ALLOW_LOCAL_WEBHOOKS:-false}
+      BLOCK_MEDIA: ${BLOCK_MEDIA:-false}
+      MAX_CONCURRENT_PAGES: ${CRAWL_CONCURRENT_REQUESTS:-10}
+    networks: [backend]
+    cpus: 2.0
+    mem_limit: 4G
+    memswap_limit: 4G
+    tmpfs: ["/tmp/.cache:noexec,nosuid,size=1g"]
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+
+  redis:
+    image: redis:alpine
+    container_name: tz-firecrawl-redis
+    restart: unless-stopped
+    command: redis-server --bind 0.0.0.0
+    networks: [backend]
+    logging: { driver: json-file, options: { max-size: "5m", max-file: "2" } }
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: tz-firecrawl-rabbitmq
+    restart: unless-stopped
+    command: rabbitmq-server
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks: [backend]
+    logging: { driver: json-file, options: { max-size: "5m", max-file: "2" } }
+
+  nuq-postgres:
+    image: ghcr.io/firecrawl/nuq-postgres:latest
+    container_name: tz-firecrawl-nuq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    volumes:
+      - firecrawl-pg-data:/var/lib/postgresql/data
+    networks: [backend]
+    logging: { driver: json-file, options: { max-size: "10m", max-file: "3" } }
+
+networks:
+  tz-edge:                                       # CHUNG cho cả VM — tạo trước: `docker network create tz-edge`
+    external: true
+  backend:                                       # private Firecrawl
+    driver: bridge
+  searxng-net:                                   # private SearXNG↔valkey
+    driver: bridge
+
+volumes:
+  firecrawl-pg-data:
+  searxng-valkey-data:

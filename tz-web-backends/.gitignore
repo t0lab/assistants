@@ -1,0 +1,4 @@
+# Secrets / live config sinh trên VM — KHÔNG commit (template = *.example)
+.env
+searxng/settings.yml
+nginx/.htpasswd

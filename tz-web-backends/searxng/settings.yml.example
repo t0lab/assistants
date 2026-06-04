@@ -1,0 +1,56 @@
+# SearXNG settings — template (commit). Live `settings.yml` (có secret_key) bị .gitignore.
+# SETUP trên VM:
+#   cp searxng/settings.yml.example searxng/settings.yml
+#   sed -i "s/__SECRET_KEY__/$(openssl rand -hex 32)/" searxng/settings.yml
+# Chi tiết + verify: ../README.md. Kiến trúc: ../../docs/design-docs/web-backends-public-vm.md.
+
+use_default_settings: true              # các block dưới PATCH lên default (engines merge theo name)
+
+general:
+  instance_name: "TimezLab Search"
+  debug: false
+
+server:
+  secret_key: "__SECRET_KEY__"          # sinh bằng openssl lúc setup — KHÔNG commit secret thật
+  limiter: false                        # Client là MÁY (Hermes) gọi format=json → limiter BẬT sẽ chặn
+                                        # (403/bot-detection). Public nhưng đã có Basic auth ở tz-nginx +
+                                        # rate-limit ở nginx/Cloudflare WAF → KHÔNG bật limiter ở đây.
+  public_instance: false
+  image_proxy: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json                              # BẮT BUỘC cho Hermes web_search (SearXNG mặc định TẮT json)
+
+valkey:
+  url: valkey://searxng-valkey:6379/0   # service `searxng-valkey` trên mạng private searxng-net
+
+outgoing:
+  request_timeout: 5.0
+  max_request_timeout: 10.0
+  pool_connections: 100
+  pool_maxsize: 20
+  # using_tor_proxy: false              # KHÔNG bật Tor: exit node bị engine chặn/captcha còn nặng hơn 429.
+
+# Engine mix chống-429: tắt google + duckduckgo + brave (hay ban IP / hard-429), dựa nhóm bền.
+# Gặp 429 ở engine nào: sửa `disabled` rồi `docker compose restart tz-searxng`. Đồng bộ lại file .example.
+engines:
+  - name: google
+    disabled: true
+  - name: duckduckgo
+    disabled: true
+  - name: brave
+    disabled: true                      # đổi false để thử lại nếu IP hết bị limit.
+  - name: bing
+    disabled: false
+  - name: startpage
+    disabled: false
+  - name: mojeek
+    disabled: false
+  - name: qwant
+    disabled: false
+  - name: wikipedia
+    disabled: false

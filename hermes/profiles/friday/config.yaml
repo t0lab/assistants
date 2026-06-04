@@ -22,6 +22,14 @@ model:
 security:
   allow_lazy_installs: false
 
+# Toolset `web`: search (SearXNG) + extract (Firecrawl) self-host trên VM, public qua Cloudflare Tunnel.
+# Friday cần web cho Q&A group (read-only web — không đụng file/secret/device nên hợp least-privilege).
+# Endpoint/secret ở profile .env: SEARXNG_URL, FIRECRAWL_API_URL + FIRECRAWL_API_KEY.
+# Dựng: ../../../tz-web-backends/  ·  ADR: ../../../docs/design-docs/web-backends-public-vm.md.
+web:
+  search_backend: searxng
+  extract_backend: firecrawl
+
 # ── TOOLSET: least-privilege ─────────────────────────────────────────────────
 # Lớp CHẶN CỨNG (denylist) — áp SAU mọi per-platform config, không platform nào
 # override được (kể cả cronjob.enabled_toolsets — cần verify G7). Mọi toolset đọc

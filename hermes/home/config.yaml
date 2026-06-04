@@ -23,12 +23,13 @@ model:
 security:
   allow_lazy_installs: false
 
-# Web search backend cho toolset `web` (web_search). Endpoint = SEARXNG_URL trong .env
-# (SearXNG self-host qua NetBird — xem searxng/ + ADR search-backend-searxng.md).
-# Hermes có auto-detect (SEARXNG_URL set → tự chọn searxng) nhưng khai explicit cho chắc + config-as-code.
-# Giá trị "searxng" lấy từ source: plugins/web/searxng/provider.py (SearXNGWebSearchProvider.name).
+# Toolset `web`: search (SearXNG) + extract (Firecrawl) self-host trên VM riêng, public qua Cloudflare
+# Tunnel, auth ở nginx. Endpoint/secret ở .env: SEARXNG_URL (Basic auth nhúng URL), FIRECRAWL_API_URL +
+# FIRECRAWL_API_KEY (Bearer). Backend value lấy từ source plugins/web/{searxng,firecrawl}/provider.py.
+# Dựng backend: ../../tz-web-backends/  ·  ADR: ../../docs/design-docs/web-backends-public-vm.md.
 web:
   search_backend: searxng
+  extract_backend: firecrawl
 
 # MCP servers
 mcp_servers:

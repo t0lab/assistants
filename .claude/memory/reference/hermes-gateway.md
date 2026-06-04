@@ -2,7 +2,7 @@
 name: hermes-gateway
 type: reference
 created: 2026-05-29
-last-updated: 2026-06-01
+last-updated: 2026-06-04
 ---
 
 # Hermes Agent — Termux Setup
@@ -52,6 +52,7 @@ Lưu ý prefix: proxy phục vụ id có sẵn `openai/` (vd `openai/Qwen/Qwen3.
 - **Chạy gateway từng profile:** `hermes -p <name> gateway` (foreground; Termux dùng nohup trong `boot.sh`, loop `~/.hermes/profiles/*/`). KHÔNG có `--all` native.
 - **Token Telegram phải KHÁC nhau mỗi profile** — Hermes từ chối gateway thứ 2 nếu trùng (Telegram 1 getUpdates/token → 409 Conflict).
 - **Toolset:** KHÔNG có allowlist mức profile, chỉ denylist `agent.disabled_toolsets` (áp SAU per-platform, không override được). Per-platform select qua `hermes -p <name> tools` (persist vào config.yaml) → re-audit khi nâng cấp.
+- **Toolset `web` (web_search/web_extract) cần PROVIDER** — không có search keyless built-in. Thiếu provider → tool **bị drop runtime** (bật trong `hermes tools` vẫn KHÔNG vào session.info → model fallback `code_execution`; Friday tắt code_execution nên mù web). Provider qua env: `SEARXNG_URL` (self-host keyless), `TAVILY_API_KEY`/`EXA_API_KEY`/`PARALLEL_API_KEY` (managed), `FIRECRAWL_API_KEY` (extract). Dự án (2026-06-04): **SearXNG (search) + Firecrawl (extract) self-host trên VM riêng, public qua Cloudflare Tunnel, auth ở nginx** — `SEARXNG_URL=https://user:pass@search.timezlab.org` (Basic auth — httpx hiểu user:pass@ trong URL), `FIRECRAWL_API_URL=https://crawl.timezlab.org` + `FIRECRAWL_API_KEY` (Bearer, PHẢI trùng `FIRECRAWL_BEARER` ở nginx). Đặt CẢ `.env` Jarvis + friday; **verified end-to-end qua CF 2026-06-04** (scrape+crawl OK, 401 khi thiếu cred). ⚠️ **Firecrawl self-host KHÔNG có native auth** (`USE_DB_AUTHENTICATION=true` cần Supabase mà self-host không config được → luôn chạy no-auth) → auth BẮT BUỘC ở nginx; cũng KHÔNG có web UI (`/` chỉ trả JSON). nginx route theo `server_name`, `map_hash_bucket_size 128` (key Bearer dài). SearXNG `limiter` off (chặn `format=json`); engine tắt google/ddg/brave (429). cloudflared token mode (ingress trên dashboard). Dựng: `tz-web-backends/` (image GHCR, zero host port, net `tz-edge`) + ADR `web-backends-public-vm.md`. TẠM tới khi lên VM: container NetBird cũ `hermes-searxng` (`100.97.17.10:8888`) vẫn chạy cho web_search.
 - **Telegram group qua ENV trong `.env`** (verified on-device 2026-06-01 — bản cài **bỏ qua** `gateway.platforms.telegram.extra` trong config.yaml; đừng tin docs mới): `TELEGRAM_GROUP_ALLOWED_CHATS=-100…` (mọi member được phép), `TELEGRAM_REQUIRE_MENTION=true`, `TELEGRAM_ALLOWED_USERS=<id>` (DM). Var tên chuẩn xem `grep -rohE "TELEGRAM_[A-Z_]+" ~/.hermes/hermes-agent`.
 - **BotFather Group Privacy phải DISABLE** + remove/add lại bot — nếu ON, @mention trong group KHÔNG tới bot (thủ phạm hay gặp). `.env` KHÔNG để comment cùng dòng (dính value). Đổi `.env` → restart gateway. chat-id lấy từ `getUpdates` của bot (khác URL web).
 - Dự án dùng: profile `friday` (bot group least-privilege, agent Friday). Setup + bảng lỗi: `hermes/install/TELEGRAM-GROUP.md`.

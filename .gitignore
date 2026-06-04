@@ -2,6 +2,10 @@
 .env
 *.env
 !*.env.example
+# live config/secret sinh trên VM cho web backends — xem tz-web-backends/.gitignore
+tz-web-backends/.env
+tz-web-backends/searxng/settings.yml
+tz-web-backends/nginx/.htpasswd
 
 # Node
 node_modules/

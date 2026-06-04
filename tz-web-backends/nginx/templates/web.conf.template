@@ -1,0 +1,50 @@
+# nginx vhost — route theo Host, auth ở đây. Template: entrypoint nginx chạy envsubst thay ${FIRECRAWL_BEARER}
+# (chỉ biến CÓ trong env mới bị thay; $http_authorization… là biến runtime của nginx, an toàn) →
+# /etc/nginx/conf.d/web.conf. Kiến trúc: ../../docs/design-docs/web-backends-public-vm.md.
+
+# Bearer cho Firecrawl (crawl.*): so khớp đúng chuỗi "Bearer <key>". Thiếu/sai → $crawl_ok=0 → 401.
+# Key "Bearer <64-hex>" ~71 ký tự > bucket mặc định 64 → phải tăng map_hash_bucket_size.
+map_hash_bucket_size 128;
+map $http_authorization $crawl_ok {
+    default                        0;
+    "Bearer ${FIRECRAWL_BEARER}"   1;
+}
+
+# Host lạ (scan/ip trực tiếp) → đóng kết nối, không lộ gì.
+server {
+    listen 80 default_server;
+    return 444;
+}
+
+# ── SearXNG (search) — Basic auth. Hermes gửi qua user:pass@ trong SEARXNG_URL. ──
+server {
+    listen 80;
+    server_name search.timezlab.org;
+
+    auth_basic           "tz-search";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    location / {
+        proxy_pass         http://tz-searxng:8080;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto https;
+    }
+}
+
+# ── Firecrawl (extract) — Bearer. Hermes SDK gửi Authorization: Bearer <FIRECRAWL_API_KEY>. ──
+server {
+    listen 80;
+    server_name crawl.timezlab.org;
+
+    location / {
+        if ($crawl_ok = 0) { return 401; }
+        proxy_pass         http://tz-firecrawl-api:3002;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto https;
+        proxy_read_timeout 120s;          # scrape/crawl có thể lâu
+    }
+}
